@@ -1,5 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/auth");
+const Webname = require("../models/webname");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const shortid = require("shortid");
@@ -93,25 +94,32 @@ const webNameCheck = async (req, res) => {
         });
      }
  
-     const user = await User.findOne({ webName:req.body.webName });
+     const user = await Webname.findOne({ webName:req.body.webName });
      if (user) {
         return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "WebName already registered",data:null
         });
      } else {
-        const filter = { mobileNumber: req.body.mobileNumber };
-        const update = { webName: req.body.webName };
+      //   const filter = { mobileNumber: req.body.mobileNumber };
+        const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
         
         // `doc` is the document _after_ `update` was applied because of
         // `returnOriginal: false`
-        const doc = await User.findOneAndUpdate(filter, update, {
-          returnOriginal: false
-        });
-        res.status(StatusCodes.OK).json({statusCode:0,
-         message:"",   
-         data: { doc },
+      //   const doc = await Webname.findOneAndUpdate(filter, update, {
+      //     returnOriginal: false
+      //   });
+      Webname.create(update).then((data, err) => {
+         if (err) res.status(StatusCodes.BAD_REQUEST).json({ err });
+         else
+           res
+            .status(StatusCodes.CREATED)
+            .json({ message: "User created Successfully" });
+         });
+      //   res.status(StatusCodes.OK).json({statusCode:0,
+      //    message:"",   
+      //    data: { doc },
 
-      });
+      // });
 
      }
      
