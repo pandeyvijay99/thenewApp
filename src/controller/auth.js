@@ -15,8 +15,8 @@ const signUp = async (req, res) => {
   const { countryCode, mobileNumber } = req.body;
 //   console.log("data is ",req.body)
   if (!countryCode || !mobileNumber ) {
-     return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "Please Provide Required Information",
+     return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        message: "Please Provide Required Information",data:null
      });
   }
 
@@ -29,8 +29,8 @@ const signUp = async (req, res) => {
 
   const user = await User.findOne({ mobileNumber });
   if (user) {
-     return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "User already registered",
+     return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        message: "User already registered",data:null
      });
   } else {
      User.create(userData).then((data, err) => {
@@ -47,8 +47,8 @@ const signIn = async (req, res) => {
   try {
     console.log("inside validation ")
      if (!req.body.countryCode || !req.body.mobileNumber) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "Please Enter Valid Number with country Code",
+        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "Please Enter Valid Number with country Code",data:null
         });
      }
  
@@ -64,19 +64,21 @@ const signIn = async (req, res) => {
         // refreshTokens.push(refreshToken);
 
         res.status(StatusCodes.OK).json({
+         statusCode:0,
             accessToken,
+            
             // refreshTokens,
-        user: { _id,countryCode, mobileNumber },
+        data: { _id,countryCode, mobileNumber },
   });
  
 } else {
-  res.status(StatusCodes.BAD_REQUEST).json({
-      message: "User does not exist..!",
+  res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+      message: "User does not exist..!",data:null
   });
 }
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.BAD_REQUEST).json({ error });
+   res.status(StatusCodes.BAD_REQUEST).json({statusCode:1, message:error,data:null });
   }
 };
 //update the existing document with new details
@@ -86,15 +88,15 @@ const webNameCheck = async (req, res) => {
 
     console.log("inside  webName validation ",req.body);
      if (!req.body.webName ) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "Please Enter Valid WebName",
+        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "Please Enter Valid WebName",data:null
         });
      }
  
      const user = await User.findOne({ webName:req.body.webName });
      if (user) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "WebName already registered",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "WebName already registered",data:null
         });
      } else {
         const filter = { mobileNumber: req.body.mobileNumber };
@@ -105,8 +107,10 @@ const webNameCheck = async (req, res) => {
         const doc = await User.findOneAndUpdate(filter, update, {
           returnOriginal: false
         });
-        res.status(StatusCodes.OK).json({
-            user: { doc },
+        res.status(StatusCodes.OK).json({statusCode:0,
+         message:"",   
+         data: { doc },
+
       });
 
      }
@@ -124,8 +128,8 @@ const updateUserDetails = async (req, res) => {
 
     console.log("userUpdation ",req.body);
      if (((req.body.fullName)&& !req.body.fullName) || ((req.body.description)&&!req.body.description)) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "Please Enter Valid Input",
+        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "Please Enter Valid Input",data:null
         });
      }
  
@@ -140,8 +144,9 @@ const updateUserDetails = async (req, res) => {
         const doc = await User.findOneAndUpdate(filter, {$set:req.body}, {
           returnOriginal: false
         });
-        res.status(StatusCodes.OK).json({
-            user: { doc },
+        res.status(StatusCodes.OK).json({statusCode:0,
+         message:"",   
+         data: { doc },
       });
      }  
 } catch (error) {
@@ -157,8 +162,8 @@ const getUserDetails = async (req, res) => {
  try {
    console.log("inside validation ")
     if (!req.body.countryCode || !req.body.mobileNumber) {
-       res.status(StatusCodes.BAD_REQUEST).json({
-          message: "Please Enter Valid Number with country Code",
+       res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+          message: "Please Enter Valid Number with country Code",data:null
        });
     }
 
