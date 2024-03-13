@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   webName: {
      type: String,
      require: true,
-     unique: true,
+   //   unique: true,
      trim: true,
      index:true,
      min: 3,

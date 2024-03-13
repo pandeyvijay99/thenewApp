@@ -34,12 +34,17 @@ const signUp = async (req, res) => {
         message: "User already registered",data:null
      });
   } else {
-     User.create(userData).then((data, err) => {
+     User.create(userData).then((user, err) => {
      if (err) res.status(StatusCodes.BAD_REQUEST).json({ err });
-     else
+     else{
+      console.log("data is ", user);
+      const accessToken = jwt.sign(
+         { _id: user._id, mobileNumber: user.mobileNumber },
+         process.env.JWT_SECRET,{ expiresIn: "100d"});
        res
         .status(StatusCodes.CREATED)
-        .json({ message: "User created Successfully" });
+        .json({statusCode:0, message: "User created Successfully" ,accessToken, data:user});
+     }
      });
   }
 };
@@ -69,7 +74,8 @@ const signIn = async (req, res) => {
             accessToken,
             
             // refreshTokens,
-        data: { _id,countryCode, mobileNumber },
+      //   data: { _id,countryCode, mobileNumber },
+      data:{user}
   });
  
 } else {
@@ -169,23 +175,30 @@ const getUserDetails = async (req, res) => {
    // console.log("validation ")
  try {
    console.log("inside validation ")
-    if (!req.body.countryCode || !req.body.mobileNumber) {
-       res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-          message: "Please Enter Valid Number with country Code",data:null
-       });
-    }
+   //  if (!req.body.countryCode || !req.body.mobileNumber) {
+   //     res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+   //        message: "Please Enter Valid Number with country Code",data:null
+   //     });
+   //  }
+    if (!req.body.userId ) {
+      res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+         message: "Please Provide Valid details ",data:null
+      });
+   }
 
-    const user = await User.findOne({ mobileNumber: req.body.mobileNumber });
+    const user = await User.findOne({ _id: req.body.userId });
    // console.log("user details ",user)
     if (user) {
           console.log("user ", user);
-       res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+       res.status(StatusCodes.OK).json({statusCode:0,message:"",
        data: { user}
  });
 
 } else {
  res.status(StatusCodes.BAD_REQUEST).json({
+   statusCode:1,
      message: "User does not exist..!",
+     data:null
  });
 }
 } catch (error) {

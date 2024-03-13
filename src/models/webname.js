@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const webnameSchema = new mongoose.Schema({
     webName: {
      type: String,
-     unique: true,
+    //  unique: true,
      require: true,
      trim: true,
      min: 3,
@@ -10,7 +10,7 @@ const webnameSchema = new mongoose.Schema({
      },
     mobileNumber: {
      type: String,
-     unique: true,
+    //  unique: true,
      require: true,
      trim: true
     }

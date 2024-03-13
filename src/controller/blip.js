@@ -7,7 +7,7 @@ const shortid = require("shortid");
 
 //Fetch User Details 
 
-const fetchBleep = async (req, res) => {
+const fetchBlip = async (req, res) => {
     // console.log("validation ")
   try {
     console.log("inside validation ")
@@ -37,4 +37,4 @@ const fetchBleep = async (req, res) => {
   }
  };
 
- module.exports = {fetchBleep };
+ module.exports = {fetchBlip };

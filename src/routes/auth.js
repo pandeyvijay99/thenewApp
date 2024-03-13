@@ -6,7 +6,7 @@ const {
   validateSignUpRequest,
   validateSignIpRequest,
 } = require("../validators/auth");
-const { fetchBleep } = require("../controller/blip");
+const { fetchBlip } = require("../controller/blip");
 const userAuthCheck = require("../middleware/auth");
 
 router.route("/signin").post(validateSignIpRequest, isRequestValidated, signIn);
@@ -17,6 +17,6 @@ router.route("/signup").post(validateSignUpRequest, isRequestValidated, signUp);
 router.route("/validateWebName").post(userAuthCheck,webNameCheck);
 router.route("/updateUserDetails").put(userAuthCheck,updateUserDetails);
 router.route("/getUserDetails").post(userAuthCheck,getUserDetails);
-router.route("/fetchBleep").post(userAuthCheck,fetchBleep);
+router.route("/getBlip").post(userAuthCheck,fetchBlip);
 
 module.exports = router;

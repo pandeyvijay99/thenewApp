@@ -6,7 +6,7 @@ const blipSchema = new mongoose.Schema({
      },
      slug: {
      type: String,
-     unique: true,
+   //   unique: true,
      require: true,
      trim: true,
      min: 3,
