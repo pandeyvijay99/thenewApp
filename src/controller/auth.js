@@ -42,8 +42,8 @@ const signUp = async (req, res) => {
          { _id: user._id, mobileNumber: user.mobileNumber },
          process.env.JWT_SECRET,{ expiresIn: "100d"});
        res
-        .status(StatusCodes.CREATED)
-        .json({statusCode:0, message: "User created Successfully" ,accessToken, data:user});
+        .status(StatusCodes.OK)
+        .json({statusCode:0, message: "User created Successfully", data:{accessToken,user}});
      }
      });
   }
@@ -71,11 +71,12 @@ const signIn = async (req, res) => {
 
         res.status(StatusCodes.OK).json({
          statusCode:0,
-            accessToken,
+         message:"",
+            
             
             // refreshTokens,
       //   data: { _id,countryCode, mobileNumber },
-      data:{user}
+      data:{accessToken,user}
   });
  
 } else {
