@@ -119,8 +119,8 @@ const webNameCheck = async (req, res) => {
          if (err) res.status(StatusCodes.BAD_REQUEST).json({ err });
          else
            res
-            .status(StatusCodes.CREATED)
-            .json({ message: "User created Successfully" });
+            .status(StatusCodes.OK)
+            .json({statusCode:0, message: "User created Successfully",data:null });
          });
       //   res.status(StatusCodes.OK).json({statusCode:0,
       //    message:"",   
