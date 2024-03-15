@@ -23,10 +23,11 @@ const signUp = async (req, res) => {
 
 //   const hash_password = await bcrypt.hash(password, 10);
  
-  const userData = {
-     countryCode,
-     mobileNumber
-  };
+//   const userData = {
+//      countryCode,
+//      mobileNumber
+//   };
+const userData = req.body;
 
   const user = await User.findOne({ mobileNumber });
   if (user) {
