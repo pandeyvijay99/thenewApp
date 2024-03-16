@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
      require: true,
      trim: true
   },
+  dob: {
+   type: String,
+   require: true,
+   trim: true
+},
   description: {
    type: String,
    require: false,

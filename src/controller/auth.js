@@ -31,14 +31,30 @@ const userData = req.body;
 
   const user = await User.findOne({ mobileNumber });
   if (user) {
-     return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+     return res.status(StatusCodes.OK).json({statusCode:1,
         message: "User already registered",data:null
      });
   } else {
      User.create(userData).then((user, err) => {
-     if (err) res.status(StatusCodes.BAD_REQUEST).json({ err });
+     if (err) res.status(StatusCodes.OK).json({ statusCode:1,message:err,data:null });
      else{
       console.log("data is ", user);
+      /*Insert webName */
+      const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
+        
+        // `doc` is the document _after_ `update` was applied because of
+        // `returnOriginal: false`
+      //   const doc = await Webname.findOneAndUpdate(filter, update, {
+      //     returnOriginal: false
+      //   });
+      Webname.create(update).then((data, err) => {
+         if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+         // else
+         //   res
+         //    .status(StatusCodes.OK)
+         //    .json({statusCode:0, message: "User created Successfully",data:null });
+         });
+      /*End of WebName insertion*/
       const accessToken = jwt.sign(
          { _id: user._id, mobileNumber: user.mobileNumber },
          process.env.JWT_SECRET,{ expiresIn: "100d"});
@@ -81,7 +97,7 @@ const signIn = async (req, res) => {
   });
  
 } else {
-  res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+  res.status(StatusCodes.OK).json({statusCode:1,
       message: "User does not exist..!",data:null
   });
 }
@@ -104,25 +120,25 @@ const webNameCheck = async (req, res) => {
  
      const user = await Webname.findOne({ webName:req.body.webName });
      if (user) {
-        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        return res.status(StatusCodes.OK).json({statusCode:1,
            message: "WebName already registered",data:null
         });
      } else {
       //   const filter = { mobileNumber: req.body.mobileNumber };
-        const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
+      //   const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
         
-        // `doc` is the document _after_ `update` was applied because of
-        // `returnOriginal: false`
-      //   const doc = await Webname.findOneAndUpdate(filter, update, {
-      //     returnOriginal: false
-      //   });
-      Webname.create(update).then((data, err) => {
-         if (err) res.status(StatusCodes.BAD_REQUEST).json({ err });
-         else
-           res
-            .status(StatusCodes.OK)
-            .json({statusCode:0, message: "User created Successfully",data:null });
-         });
+      //   // `doc` is the document _after_ `update` was applied because of
+      //   // `returnOriginal: false`
+      // //   const doc = await Webname.findOneAndUpdate(filter, update, {
+      // //     returnOriginal: false
+      // //   });
+      // Webname.create(update).then((data, err) => {
+      //    if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+      //    else
+      //      res
+      //       .status(StatusCodes.OK)
+      //       .json({statusCode:0, message: "User created Successfully",data:null });
+      //    });
       //   res.status(StatusCodes.OK).json({statusCode:0,
       //    message:"",   
       //    data: { doc },
@@ -133,7 +149,7 @@ const webNameCheck = async (req, res) => {
      
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.BAD_REQUEST).json({ error });
+   res.status(StatusCodes.BAD_REQUEST).json({ statusCode:1,message: error,data:null });
   }
 };
 
@@ -167,7 +183,7 @@ const updateUserDetails = async (req, res) => {
      }  
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.BAD_REQUEST).json({ error });
+   res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
   }
 };
 
