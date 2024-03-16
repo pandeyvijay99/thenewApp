@@ -14,7 +14,7 @@ router.route("/signin").post(validateSignIpRequest, isRequestValidated, signIn);
 
 router.route("/signup").post(validateSignUpRequest, isRequestValidated, signUp);
 
-router.route("/validateWebName").post(webNameCheck);
+router.route("/validateWebName").post(userAuthCheck,webNameCheck);
 router.route("/updateUserDetails").put(userAuthCheck,updateUserDetails);
 router.route("/getUserDetails").post(userAuthCheck,getUserDetails);
 router.route("/getBlip").post(userAuthCheck,fetchBlip);
