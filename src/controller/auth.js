@@ -108,11 +108,11 @@ const signIn = async (req, res) => {
 };
 //update the existing document with new details
 const webNameCheck = async (req, res) => {
-    // console.log("webName validation ")
+     console.log("webName validation ")
   try {
 
-    console.log("inside  webName validation ",req.body);
-     if (!req.body.webName ) {
+      console.log("inside  webName validation ",req.body);
+      if (!req.body.webName ) {
         res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Please Enter Valid WebName",data:null
         });
@@ -124,6 +124,7 @@ const webNameCheck = async (req, res) => {
            message: "WebName already registered",data:null
         });
      } else {
+      console.log("data available")
       //   const filter = { mobileNumber: req.body.mobileNumber };
       //   const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
         
@@ -144,8 +145,11 @@ const webNameCheck = async (req, res) => {
       //    data: { doc },
 
       // });
+      return res.status(StatusCodes.OK).json({statusCode:0,
+         message: "webName available",data:null
+      });
 
-     }
+   }
      
 } catch (error) {
     console.log("catch ", error );
