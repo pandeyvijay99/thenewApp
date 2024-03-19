@@ -38,7 +38,7 @@ const userData = req.body;
      User.create(userData).then((user, err) => {
      if (err) res.status(StatusCodes.OK).json({ statusCode:1,message:err,data:null });
      else{
-      console.log("data is ", user);
+      // console.log("data is ", user);
       /*Insert webName */
       const update = { webName: req.body.webName ,mobileNumber: req.body.mobileNumber};
         
@@ -228,5 +228,35 @@ const getUserDetails = async (req, res) => {
   res.status(StatusCodes.BAD_REQUEST).json({ error });
  }
 };
+//Code for searchWebName
+const searchWebName = async (req, res) => {
+   // console.log("user updation ")
+ try {
 
-module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails};
+   console.log("userUpdation ",req.body);
+    if (!req.body.searchString) {
+       res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+          message: "Please Enter Valid Input",data:null
+       });
+    }
+    
+    const user = await Webname.find({ webName:{$regex:req.body.searchString}});
+    console.log("data  response is ",user.length);
+    
+    if (user && user.length>0) {
+      return res.status(StatusCodes.OK).json({statusCode:0,
+         message: "",data:user
+      });
+       
+    } else {
+      return res.status(StatusCodes.OK).json({statusCode:1,
+         message: "No data found",data:null
+      });
+   }  
+} catch (error) {
+   console.log("catch ", error );
+  res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
+ }
+};
+
+module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails,searchWebName};
