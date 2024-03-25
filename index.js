@@ -1,8 +1,11 @@
 const express = require("express");
 require("dotenv").config();
 const connectDB = require("./src/db/connect");
+const fileupload = require("express-fileupload");
+
 const app = express();
 var cors = require("cors");
+app.use(fileupload());
 const authRouter = require("./src/routes/auth");
 app.use(cors());
 app.use(express.json());
