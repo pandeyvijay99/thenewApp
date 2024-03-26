@@ -49,9 +49,9 @@ const fetchBlip = async (req, res) => {
 const uploadProfilePic = async (req, res) => {
   const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-const accountName = 'newappdata';
-const accountKey = 'NSE5JtVyWzyNV+WKtqVl8uxK+l8W7RqZsIU1gszC1ncMRwcnJjpYQM7x8AMYFAfhjG3rlrzpDOG5+ASt6WMEww==';
-const containerName = 'newprofilepic';
+const accountName = process.env.ACCOUNT_NAME;
+const accountKey = process.env.KEY_DATA;
+const containerName = process.env.PROFILE_CONTAINER;
 const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
 const blobServiceClient = new BlobServiceClient(
     `https://${accountName}.blob.core.windows.net`,
@@ -94,9 +94,9 @@ const file = req.files.file;
 const uploadBlipFile = async (req, res) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
-const accountName = 'newappdata';
-const accountKey = 'NSE5JtVyWzyNV+WKtqVl8uxK+l8W7RqZsIU1gszC1ncMRwcnJjpYQM7x8AMYFAfhjG3rlrzpDOG5+ASt6WMEww==';
-const containerName = 'newvideo';
+const accountName = process.env.ACCOUNT_NAME;
+const accountKey = process.env.KEY_DATA;
+const containerName = process.env.BLIP_CONTAINER;
 const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
 const blobServiceClient = new BlobServiceClient(
     `https://${accountName}.blob.core.windows.net`,
