@@ -1,3 +1,4 @@
+//removed slug
 const mongoose = require("mongoose");
 const blipSchema = new mongoose.Schema({
     videoName: {
