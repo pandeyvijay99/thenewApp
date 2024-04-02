@@ -4,13 +4,8 @@ const blipSchema = new mongoose.Schema({
         type: String,
         require: true
      },
-     slug: {
-     type: String,
-   //   unique: true,
-     require: true,
-     trim: true,
-     min: 3,
-     max: 20,
+     mobileNumber: {
+     type: String
   },
   blipUrl: {
      type: String,

@@ -12,6 +12,7 @@ module.exports = (req, res, next) => {
         console.log("token" , token);
         
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("decoded",decoded.mobileNumber);
         req.user = decoded;
         next();
         }else{
