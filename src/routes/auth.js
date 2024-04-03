@@ -18,7 +18,7 @@ router.route("/validateWebName").post(webNameCheck);
 router.route("/updateUserDetails").put(userAuthCheck,updateUserDetails);
 router.route("/getUserDetails").post(userAuthCheck,getUserDetails);
 router.route("/getBlip").post(fetchBlip);
-router.route("/uploadProfilePic").post(userAuthCheck,uploadProfilePic)
+router.route("/uploadProfilePic").post(uploadProfilePic)
 router.route('/searchWebName').post(searchWebName);
 router.route("/uploadBlipFile").post(userAuthCheck,uploadBlipFile)
 router.route("/getAllBlip").post(fetchAllBlip);
