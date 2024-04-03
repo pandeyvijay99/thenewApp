@@ -77,6 +77,7 @@ const file = req.files.file;
     // Upload file to Azure Blob Storage
     let mobileNumber = ""
     debugger
+    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
     if(authHeader){
         const token =  authHeader.split(' ')[1];
     if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null});
