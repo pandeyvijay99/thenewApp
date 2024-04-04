@@ -122,11 +122,18 @@ const fetchComment = async (req, res) => {
         });
      }
  debugger;
+ let user_id="";
      const data = await Comment.find({blip_id:req.body.blip_id});
-     console.log("data is data ",data[0].user_id )
+   //   
     //  const ObjectId = require('mongoose').Types.ObjectId
     //  user_id = new ObjectId(data[0].user_id)
-    user_id = data[0].user_id;
+    console.log("data v", data.length)
+    debugger
+    if(data.length>0)
+      user_id = (data[0].user_id)?(data[0].user_id):"";
+     
+    if(user_id){
+      console.log("data is data ",data[0].user_id )
      const data1 = await Comment.aggregate().lookup({
         from:"users",
         localField:"user_id",
@@ -140,7 +147,11 @@ const fetchComment = async (req, res) => {
         res.status(StatusCodes.OK).json({statusCode:"0",message:"",
         data1
   });
- 
+}else{
+    res.status(StatusCodes.OK).json({statusCode:"1",message:"something went wrong",
+    data:null
+})
+ }
  } else {
   res.status(StatusCodes.OK).json({statusCode:1,
       message: "Comment does not exist..!",
@@ -163,30 +174,35 @@ const fetchComment = async (req, res) => {
        }
    debugger;
        const data = await Comment.find({blip_id:req.body.blip_id});
-       console.log("data is data ",data[0].user_id )
-      //  const ObjectId = require('mongoose').Types.ObjectId
-      //  user_id = new ObjectId(data[0].user_id)
-      user_id = data[0].user_id;
-       const data1 = await Comment.aggregate().lookup({
-          from:"users",
-          localField:"user_id",
-          foreignField:"_id",
-          as:"datav"
-       })
-  
-      console.log("user details ",data1[0])
-       if (data1) {
-          //    console.log("user ", data);
-          res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-          data1
-    });
-   
-   } else {
-    res.status(StatusCodes.OK).json({statusCode:1,
-        message: "Comment does not exist..!",
-        data:null
-    });
-   }
+       if(data.length>0)
+         user_id = (data[0].user_id)?(data[0].user_id):"";
+      
+         if(user_id){
+            console.log("data is data ",data[0].user_id )
+           const data1 = await Comment.aggregate().lookup({
+              from:"users",
+              localField:"user_id",
+              foreignField:"_id",
+              as:"datav"
+           })
+      
+          console.log("user details ",data1[0])
+           if (data1) {
+              //    console.log("user ", data);
+              res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+              data1
+        });
+      }else{
+          res.status(StatusCodes.OK).json({statusCode:"1",message:"something went wrong",
+          data:null
+      })
+       }
+       } else {
+        res.status(StatusCodes.OK).json({statusCode:1,
+            message: "Comment does not exist..!",
+            data:null
+        });
+       }
    } catch (error) {
       console.log("catch ", error );
      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });

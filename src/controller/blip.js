@@ -8,6 +8,7 @@ const { v1: uuidv1 } = require("uuid");
 // const { DefaultAzureCredential } = require('@azure/identity');
 const multer = require('multer');
 const path = require('path');
+const User = require("../models/auth");
 require("dotenv").config();
 
 
@@ -93,6 +94,10 @@ const file = req.files.file;
         console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
         const fileUrl = blockBlobClient.url;
         console.log("fileUrl",fileUrl)
+        debugger;
+        const user = await User.findOneAndUpdate({ mobileNumber: mobileNumber },{ $set: { profilePicture: fileUrl } });
+        console.log("user ",user)
+    // console.log("user details ",user)
         return res.status(200).send({statusCode:0,message:'',data:{profilePicture:fileUrl}});
     } catch (error) {
         console.error("Error uploading to Azure Blob Storage:", error);
