@@ -123,7 +123,10 @@ const fetchComment = async (req, res) => {
      }
  debugger;
  let user_id="";
-     const data1 = await Comment.find({blip_id:req.body.blip_id});
+ var limit = req.body.limit
+  , offset = Math.max(0, req.body.offset)
+     const data1 = await Comment.find({blip_id:req.body.blip_id}).limit(limit)
+     .skip(limit * offset);
    //   
     //  const ObjectId = require('mongoose').Types.ObjectId
     //  user_id = new ObjectId(data[0].user_id)
@@ -145,7 +148,7 @@ const fetchComment = async (req, res) => {
      if (data) {
         //    console.log("user ", data);
         res.status(StatusCodes.OK).json({statusCode:0,message:"",
-        data
+        data,totalCount:data1.length
   });
 }else{
     res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
@@ -173,12 +176,18 @@ const fetchComment = async (req, res) => {
           });
        }
    debugger;
+   var limit = req.body.limit
+  , offset = Math.max(0, req.body.offset)
    const ObjectId = require('mongoose').Types.ObjectId
     const filter = { _id: new ObjectId( req.body.comment_id) };
-       const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1});
-       console.log("data",data);
+       const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1}).limit(limit)
+       .skip(limit * offset);;
+      //  console.log("data",data[0].subComment)
+      
        debugger;
        if(data.length>0){
+         console.log("type of ",(data[0].subComment).length);
+         let totalCount = (data[0].subComment)?(data[0].subComment).length:0
          // user_id = (data[0].user_id)?(data[0].user_id):"";
       
          // if(user_id){
@@ -194,7 +203,7 @@ const fetchComment = async (req, res) => {
            if (data) {
               //    console.log("user ", data);
               res.status(StatusCodes.OK).json({statusCode:0,message:"",
-              data
+              data,totalCount:totalCount
         });
       }else{
           res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
