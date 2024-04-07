@@ -222,12 +222,36 @@ const fetchAllBlip = async (req, res) => {
     //     });
     //  }
  
-     const data = await Blip.find({});
+    //  const data = await Blip.find({});
+    const result = await   Blip.aggregate([
+        {
+            $lookup: {
+                from: "users", // name of the comment collection
+                localField: "mobileNumber",
+                foreignField: "mobileNumber",
+                as: "user_details"
+            }
+        },
+        {
+           $project: {
+               _id: 1,
+               tags: 1,
+               hashtag:1,
+               user_details: {
+                 fullName: 1,
+                 profilePicture: 1,
+                 _id:1,
+                 webName: 1
+                   // include other fields from user collection as needed
+               }
+           }
+       }
+     ]);
     // console.log("user details ",user)
-     if (data) {
-           console.log("user ", data);
+     if (result) {
+           console.log("user ", result);
         res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-        data
+        data:result
   });
  
  } else {
