@@ -14,7 +14,16 @@ const commentSchema = new mongoose.Schema({
      type: String,
      require: true,
      index:true
-  }
+  },
+  subComment:[{
+    comment_user_id:mongoose.Schema.Types.ObjectId,
+    comment: {
+        type: String,
+        require: true,
+        index:true
+     }
+
+  }]
 },
 {
      timestamps: true 
