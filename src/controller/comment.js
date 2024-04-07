@@ -179,7 +179,7 @@ const fetchComment = async (req, res) => {
    var limit = req.body.limit
   , offset = Math.max(0, req.body.offset)
    const ObjectId = require('mongoose').Types.ObjectId
-   //   const filter = { _id: new ObjectId( req.body.comment_id) };
+     const filter = { _id: new ObjectId( req.body.comment_id) };
       // const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1}).limit(limit)
       // .skip(limit * offset);;
       //  console.log("data",data[0].subComment)
@@ -190,7 +190,7 @@ const fetchComment = async (req, res) => {
    const data = await   Comment.aggregate([
          {
              $match:{
-               _id: new ObjectId("660e71d9315e9b73eb843e2c")
+               _id: new ObjectId( req.body.comment_id)
              } // unwind the comments array
          },
          {
