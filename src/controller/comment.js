@@ -70,11 +70,11 @@ const postComment = async (req, res) => {
            message: "Coment is required",
         });
      }
-     if (!req.body.comment_user_id || !req.body.comment_user_id) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "comment_user_id is required",
-        });
-     }
+   //   if (!req.body.comment_user_id || !req.body.comment_user_id) {
+   //      res.status(StatusCodes.BAD_REQUEST).json({
+   //         message: "comment_user_id is required",
+   //      });
+   //   }
      /*code for getting user_id from  header*/
         const authHeader = (req.headers.authorization)?req.headers.authorization:null;
         if(authHeader){
@@ -82,11 +82,11 @@ const postComment = async (req, res) => {
             if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
-                user_id = decoded._id;
+                comment_user_id = decoded._id;
                 console.log("blipdecoded ",decoded._id);
         }
         const commentData =[{
-            comment_user_id:req.body.comment_user_id,
+            comment_user_id:comment_user_id,
             comment:req.body.comment
         }]
 
@@ -121,34 +121,116 @@ const fetchComment = async (req, res) => {
            message: "Blip id is required",data:null
         });
      }
- debugger;
- let user_id="";
- var limit = req.body.limit
-  , offset = Math.max(0, req.body.offset)
-     const data1 = await Comment.find({blip_id:req.body.blip_id}).limit(limit)
-     .skip(limit * offset);
-   //   
-    //  const ObjectId = require('mongoose').Types.ObjectId
-    //  user_id = new ObjectId(data[0].user_id)
-    console.log("data v", data1.length)
-    debugger
-    if(data1.length>0)
-      user_id = (data1[0].user_id)?(data1[0].user_id):"";
+      debugger;
+      let user_id="";
+      // var limit = req.body.limit
+      // , offset = Math.max(0, req.body.offset)
+      //    //   const data = await Comment.find({blip_id:req.body.blip_id},{comment:1,user_id:1}).limit(limit)
+         //   .skip(limit * offset);
+   
+    
+//       debugger
+//        if(data.length>0)
+//          user_id = (data[0].user_id)?(data[0].user_id):"";
      
-    if(user_id){
-      console.log("data is data ",data1[0].user_id )
-     const data = await Comment.aggregate().lookup({
-        from:"users",
-        localField:"comment_user_id",
-        foreignField:"_id",
-        as:"datav"
-     })
+//     if(user_id){
+//       console.log("data is data ",data[0].user_id )
+//      const result = await Comment.aggregate().lookup({
+//         from:"users",
+//         localField:"comment_user_id",
+//         foreignField:"_id",
+//         as:"user_data"
+//      },
+//      {
+//         $project: {
+//             _id: 1,
+//             comment: 1,
+//             user_id:1,
+//             user_details: {
+//               fullName: 1,
+//               profilePicture: 1,
+//               _id:1,
+//               webName: 1
+//                 // include other fields from user collection as needed
+//             }
+//         }
+//     }
+     
+//      )
+//      totalCount = result.length;
+//     console.log("user details ",data[0])
+// //     result = data.map((data) => {
+// //       data["totalCount"] = totalCount;
+// //       return data;
+// //   });
+// // data.push({"totalCount":totalCount})
+//      if (data) {
+//         //    console.log("user ", data);
+//         res.status(StatusCodes.OK).json({statusCode:0,message:"",
+//         data:{result,totalCount:totalCount}
+//   });
+// }else{
+//     res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
+//     data:null
+// })
+//  }
+//  } else {
+//   res.status(StatusCodes.OK).json({statusCode:1,
+//       message: "Comment does not exist..!",
+//       data:null
+//   });
+//  }
 
-    console.log("user details ",data[0])
-     if (data) {
+const result = await   Comment.aggregate([
+   {
+       $match:{
+         blip_id:req.body.blip_id
+       } // unwind the comments array
+   },
+   {
+       $lookup: {
+           from: "users", // name of the comment collection
+           localField: "user_id",
+           foreignField: "_id",
+           as: "user_details"
+       }
+   },
+   {
+      $project: {
+          _id: 1,
+          comment: 1,
+          user_details: {
+            fullName: 1,
+            profilePicture: 1,
+            _id:1,
+            webName: 1
+              // include other fields from user collection as needed
+          }
+      }
+  }
+]);
+console.log("data is ", result);
+//   data.push({totalCount:result.length})
+console.log("data lenght ", result.length);
+if(result.length>0){
+   // console.log("type of ",(data[0].subComment).length);
+   let totalCount = result.length;
+   // user_id = (data[0].user_id)?(data[0].user_id):"";
+
+   // if(user_id){
+   //    console.log("data is data ",data[0].user_id )
+   //   const data = await Comment.aggregate().lookup({
+   //      from:"users",
+   //      localField:"user_id",
+   //      foreignField:"_id",
+   //      as:"datav"
+   //   })
+
+   //  console.log("user details ",data[0])
+     if (result) {
         //    console.log("user ", data);
         res.status(StatusCodes.OK).json({statusCode:0,message:"",
-        data,totalCount:data1.length
+        data:{result,totalCount:totalCount}
   });
 }else{
     res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
@@ -161,6 +243,12 @@ const fetchComment = async (req, res) => {
       data:null
   });
  }
+
+
+
+
+
+
  } catch (error) {
     console.log("catch ", error );
    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
@@ -187,7 +275,7 @@ const fetchComment = async (req, res) => {
       
 
        debugger;
-   const data = await   Comment.aggregate([
+   const result = await   Comment.aggregate([
          {
              $match:{
                _id: new ObjectId( req.body.comment_id)
@@ -204,9 +292,23 @@ const fetchComment = async (req, res) => {
                  as: "user_details"
              }
          },
+         {
+            $project: {
+                _id: 1,
+                subComment: 1,
+                user_details: {
+                  fullName: 1,
+                  profilePicture: 1,
+                  _id:1,
+                  webName: 1
+                    // include other fields from user collection as needed
+                }
+            }
+        }
      ]);
-     console.log("data is ", data);
-     console.log("data lenght ", data.length);
+     console.log("data is ", result);
+   //   data.push({totalCount:result.length})
+     console.log("data lenght ", result.length);
 
 
 
@@ -216,10 +318,11 @@ const fetchComment = async (req, res) => {
 
 
        debugger;
-
-       if(data.length>0){
+      //  data = Object.assign({}, ...data);
+      //  console.log("object dtaa", data)
+       if(result.length>0){
          // console.log("type of ",(data[0].subComment).length);
-         let totalCount = data.length;
+         let totalCount = result.length;
          // user_id = (data[0].user_id)?(data[0].user_id):"";
       
          // if(user_id){
@@ -232,10 +335,10 @@ const fetchComment = async (req, res) => {
          //   })
       
          //  console.log("user details ",data[0])
-           if (data) {
+           if (result) {
               //    console.log("user ", data);
               res.status(StatusCodes.OK).json({statusCode:0,message:"",
-              data,totalCount:totalCount
+              data:{result,totalCount:totalCount}
         });
       }else{
           res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",

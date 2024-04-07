@@ -6,7 +6,9 @@ const blipSchema = new mongoose.Schema({
         require: true
      },
      mobileNumber: {
-     type: String
+     type: String,
+     ref: "mobileNumber",
+      required: true
   },
   blipUrl: {
      type: String,
