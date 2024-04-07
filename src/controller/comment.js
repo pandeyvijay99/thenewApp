@@ -87,14 +87,14 @@ const postComment = async (req, res) => {
         }
         const commentData =[{
             comment_user_id:req.body.comment_user_id,
-            subcomment:req.body.comment
+            comment:req.body.comment
         }]
 
         debugger;
         const ObjectId = require('mongoose').Types.ObjectId
         const filter = { _id: new ObjectId( req.body.parent_commnet_id) };
         console.log("filer is ",filter);
-        const doc = await Comment.findOneAndUpdate(filter, {$push:{subcomments:commentData}}, {
+        const doc = await Comment.findOneAndUpdate(filter, {$push:{subComment:commentData}}, {
           returnOriginal: false
         });
         res.status(StatusCodes.OK).json({statusCode:0,
@@ -123,32 +123,32 @@ const fetchComment = async (req, res) => {
      }
  debugger;
  let user_id="";
-     const data = await Comment.find({blip_id:req.body.blip_id});
+     const data1 = await Comment.find({blip_id:req.body.blip_id});
    //   
     //  const ObjectId = require('mongoose').Types.ObjectId
     //  user_id = new ObjectId(data[0].user_id)
-    console.log("data v", data.length)
+    console.log("data v", data1.length)
     debugger
-    if(data.length>0)
-      user_id = (data[0].user_id)?(data[0].user_id):"";
+    if(data1.length>0)
+      user_id = (data1[0].user_id)?(data1[0].user_id):"";
      
     if(user_id){
-      console.log("data is data ",data[0].user_id )
-     const data1 = await Comment.aggregate().lookup({
+      console.log("data is data ",data1[0].user_id )
+     const data = await Comment.aggregate().lookup({
         from:"users",
         localField:"user_id",
         foreignField:"_id",
         as:"datav"
      })
 
-    console.log("user details ",data1[0])
-     if (data1) {
+    console.log("user details ",data[0])
+     if (data) {
         //    console.log("user ", data);
-        res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-        data1
+        res.status(StatusCodes.OK).json({statusCode:0,message:"",
+        data
   });
 }else{
-    res.status(StatusCodes.OK).json({statusCode:"1",message:"something went wrong",
+    res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
     data:null
 })
  }
@@ -167,33 +167,37 @@ const fetchComment = async (req, res) => {
  const fetchSubComment = async (req, res) => {
     
     try {
-      if (!req.body.comment_id || !req.body.commend_id) {
+      if (!req.body.comment_id) {
           res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
              message: "Comment  id is required",data:null
           });
        }
    debugger;
-       const data = await Comment.find({blip_id:req.body.blip_id});
-       if(data.length>0)
-         user_id = (data[0].user_id)?(data[0].user_id):"";
+   const ObjectId = require('mongoose').Types.ObjectId
+    const filter = { _id: new ObjectId( req.body.comment_id) };
+       const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1});
+       console.log("data",data);
+       debugger;
+       if(data.length>0){
+         // user_id = (data[0].user_id)?(data[0].user_id):"";
       
-         if(user_id){
-            console.log("data is data ",data[0].user_id )
-           const data1 = await Comment.aggregate().lookup({
-              from:"users",
-              localField:"user_id",
-              foreignField:"_id",
-              as:"datav"
-           })
+         // if(user_id){
+         //    console.log("data is data ",data[0].user_id )
+         //   const data = await Comment.aggregate().lookup({
+         //      from:"users",
+         //      localField:"user_id",
+         //      foreignField:"_id",
+         //      as:"datav"
+         //   })
       
-          console.log("user details ",data1[0])
-           if (data1) {
+         //  console.log("user details ",data[0])
+           if (data) {
               //    console.log("user ", data);
-              res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-              data1
+              res.status(StatusCodes.OK).json({statusCode:0,message:"",
+              data
         });
       }else{
-          res.status(StatusCodes.OK).json({statusCode:"1",message:"something went wrong",
+          res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
           data:null
       })
        }
