@@ -185,7 +185,8 @@ const result = await   Comment.aggregate([
    {
        $match:{
          blip_id:req.body.blip_id
-       } // unwind the comments array
+       } ,
+       
    },
    {
        $lookup: {
@@ -199,15 +200,20 @@ const result = await   Comment.aggregate([
       $project: {
           _id: 1,
           comment: 1,
-          user_details: {
-            fullName: 1,
-            profilePicture: 1,
-            _id:1,
-            webName: 1
-              // include other fields from user collection as needed
-          }
-      }
-  }
+          user_details: {$arrayElemAt:["$user_details",0]},
+         //  user_details: {
+         //    fullName: 1,
+         //    profilePicture: 1,
+         //    _id:1,
+         //    webName: 1
+         //      // include other fields from user collection as needed
+         //  },
+         
+      },
+      
+  },
+  
+
 ]);
 console.log("data is ", result);
 //   data.push({totalCount:result.length})
@@ -296,13 +302,14 @@ if(result.length>0){
             $project: {
                 _id: 1,
                 subComment: 1,
-                user_details: {
-                  fullName: 1,
-                  profilePicture: 1,
-                  _id:1,
-                  webName: 1
-                    // include other fields from user collection as needed
-                }
+                user_details: {$arrayElemAt:["$user_details",0]},
+               //  user_details: {
+               //    fullName: 1,
+               //    profilePicture: 1,
+               //    _id:1,
+               //    webName: 1
+               //      // include other fields from user collection as needed
+               //  }
             }
         }
      ]);

@@ -237,13 +237,15 @@ const fetchAllBlip = async (req, res) => {
                _id: 1,
                tags: 1,
                hashtag:1,
-               user_details: {
-                 fullName: 1,
-                 profilePicture: 1,
-                 _id:1,
-                 webName: 1
-                   // include other fields from user collection as needed
-               }
+               user_details: {$arrayElemAt:["$user_details",0]},
+               blipUrl:1
+            //    user_details: {
+            //      fullName: 1,
+            //      profilePicture: 1,
+            //      _id:1,
+            //      webName: 1
+            //        // include other fields from user collection as needed
+            //    }
            }
        }
      ]);
