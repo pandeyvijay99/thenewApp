@@ -238,7 +238,8 @@ const fetchAllBlip = async (req, res) => {
                tags: 1,
                hashtag:1,
                user_details: {$arrayElemAt:["$user_details",0]},
-               blipUrl:1
+               blipUrl:1,
+               createdAt:1,
             //    user_details: {
             //      fullName: 1,
             //      profilePicture: 1,
