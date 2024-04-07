@@ -139,7 +139,7 @@ const fetchComment = async (req, res) => {
       console.log("data is data ",data1[0].user_id )
      const data = await Comment.aggregate().lookup({
         from:"users",
-        localField:"user_id",
+        localField:"comment_user_id",
         foreignField:"_id",
         as:"datav"
      })
@@ -179,15 +179,47 @@ const fetchComment = async (req, res) => {
    var limit = req.body.limit
   , offset = Math.max(0, req.body.offset)
    const ObjectId = require('mongoose').Types.ObjectId
-    const filter = { _id: new ObjectId( req.body.comment_id) };
-       const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1}).limit(limit)
-       .skip(limit * offset);;
+   //   const filter = { _id: new ObjectId( req.body.comment_id) };
+      // const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1}).limit(limit)
+      // .skip(limit * offset);;
       //  console.log("data",data[0].subComment)
+  
       
+
        debugger;
+   const data = await   Comment.aggregate([
+         {
+             $match:{
+               _id: new ObjectId("660e71d9315e9b73eb843e2c")
+             } // unwind the comments array
+         },
+         {
+            $unwind :"$subComment"         
+         },
+         {
+             $lookup: {
+                 from: "users", // name of the comment collection
+                 localField: "subComment.comment_user_id",
+                 foreignField: "_id",
+                 as: "user_details"
+             }
+         },
+     ]);
+     console.log("data is ", data);
+     console.log("data lenght ", data.length);
+
+
+
+
+
+
+
+
+       debugger;
+
        if(data.length>0){
-         console.log("type of ",(data[0].subComment).length);
-         let totalCount = (data[0].subComment)?(data[0].subComment).length:0
+         // console.log("type of ",(data[0].subComment).length);
+         let totalCount = data.length;
          // user_id = (data[0].user_id)?(data[0].user_id):"";
       
          // if(user_id){

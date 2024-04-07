@@ -21,7 +21,12 @@ const commentSchema = new mongoose.Schema({
         type: String,
         require: true,
         index:true
-     }
+     },
+     comment_user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "comment_user_id",
+      required: true
+  },
 
   }]
 },
