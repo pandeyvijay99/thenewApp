@@ -44,9 +44,35 @@ const blipSchema = new mongoose.Schema({
    type: String,
    require: false,
    trim: true
-}
 },
+blipReaction:[{
+   reaction:{
+      type:String,
+      require: true
+   },
+   reaction_user_id: {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: "reaction_user_id",
+     required: true
+   },
+
+ }],
+ ratings:[{
+   rating:{
+      type:String,
+      require: true
+   },
+   rating_user_id: {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: "rating_user_id",
+     required: true
+   },
+
+ }]
+},
+
 {
      timestamps: true 
-});
+}
+);
 module.exports = mongoose.model("Blip", blipSchema);

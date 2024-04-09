@@ -6,7 +6,7 @@ const {
   validateSignUpRequest,
   validateSignIpRequest,
 } = require("../validators/auth");
-const { fetchBlip, uploadProfilePic ,uploadBlipFile,fetchAllBlip} = require("../controller/blip");
+const { fetchBlip, uploadProfilePic ,uploadBlipFile,fetchAllBlip,postReaction,postRating,totalReaction,totalRating} = require("../controller/blip");
 const { postComment,postSubComment,fetchComment,fetchSubComment} = require("../controller/comment");
 const userAuthCheck = require("../middleware/auth");
 
@@ -27,6 +27,9 @@ router.route("/post-comment").post(userAuthCheck,postComment)
 router.route("/post-sub-comment").post(userAuthCheck,postSubComment)
 router.route("/fetch-comment").post(fetchComment)
 router.route("/fetch-sub-comment").post(fetchSubComment)
-
+router.route("/postReaction").post(userAuthCheck,postReaction)
+router.route("/postRating").post(userAuthCheck,postRating)
+router.route("/totalReaction").post(totalReaction)
+router.route("/totalRating").post(totalRating)
 
 module.exports = router;
