@@ -57,8 +57,8 @@ blipReaction:[{
    },
 
  }],
- ratings:[{
-   rating:{
+ blipRating:[{
+   ratingno:{
       type:String,
       require: true
    },

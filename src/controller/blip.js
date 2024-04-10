@@ -356,13 +356,13 @@ const fetchAllBlip = async (req, res) => {
         console.log("user_id ", user_id)
         const blipRating ={
             reaction_user_id:user_id,
-            rating:req.body.rating
+            ratingno:req.body.rating
         }
         debugger;
         // const ObjectId = require('mongoose').Types.ObjectId
         const filter = { _id: new ObjectId( req.body.blip_id) };
         console.log("filer is ",filter);
-        const result = await Blip.findOneAndUpdate(filter, {$push:{ratings:blipRating}}, {
+        const result = await Blip.findOneAndUpdate(filter, {$push:{blipRating:blipRating}}, {
           returnOriginal: false
         });
         res.status(StatusCodes.OK).json({statusCode:0,
@@ -470,31 +470,31 @@ const fetchAllBlip = async (req, res) => {
         },
         {
           $project: {
-            totalRating: { $size: '$ratings' } // Project a field with the size of the subdocuments array
+            totalRating: { $size: '$blipRating' } // Project a field with the size of the subdocuments array
           }
         }
       ]);
         console.log("result is ",result);
-      grp = await Blip.aggregate([
+      RatingCount = await Blip.aggregate([
         {
             $match:{
                 _id : new ObjectId(req.body.blip_id)
             }
         },
         {
-          $unwind: '$ratings' // Unwind the subdocuments array
+          $unwind: '$blipRating' // Unwind the subdocuments array
         },
         {
           $group: {
-            ratings: '$ratings.rating', // Group by the 'name' field within subdocuments
+            _id: '$blipRating.ratingno', // Group by the 'name' field within subdocuments
             totalCount: { $sum: 1 } // Count subdocuments in each group
           }
         }
       ])
-      console.log("blip count ratings ",grp)
+      console.log("blip count ratings ",RatingCount)
         res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
-         data: { result ,groupbyres},
+         data: { result ,RatingCount},
       });
  
  } catch (error) {
