@@ -55,7 +55,9 @@ blipReaction:[{
      ref: "reaction_user_id",
      required: true
    },
-
+   createdAt: { type: Date, default: Date.now },
+   updatedAt: { type: Date, default: Date.now }
+   
  }],
  blipRating:[{
    ratingno:{
@@ -67,7 +69,8 @@ blipReaction:[{
      ref: "rating_user_id",
      required: true
    },
-
+   createdAt: { type: Date, default: Date.now },
+   updatedAt: { type: Date, default: Date.now }
  }]
 },
 

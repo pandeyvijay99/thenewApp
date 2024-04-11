@@ -355,7 +355,7 @@ const fetchAllBlip = async (req, res) => {
         user_id = new ObjectId(user_id)
         console.log("user_id ", user_id)
         const blipRating ={
-            reaction_user_id:user_id,
+          rating_user_id:user_id,
             ratingno:req.body.rating
         }
         debugger;
@@ -377,7 +377,7 @@ const fetchAllBlip = async (req, res) => {
  };
  /*End of code*/
  const totalReaction = async (req, res) => {
-    // console.log("validation ")
+   
   try {
     debugger;
     console.log("inside count ")
@@ -390,11 +390,7 @@ const fetchAllBlip = async (req, res) => {
      
         debugger;
          const ObjectId = require('mongoose').Types.ObjectId
-        
-    //     res.status(StatusCodes.OK).json({statusCode:0,
-    //      message:"",   
-    //      data: { result },
-    //   });
+   
     result = await Blip.aggregate([
         {
           $match: { _id: new ObjectId(req.body.blip_id) } // Match the parent document with the given ID
@@ -406,32 +402,38 @@ const fetchAllBlip = async (req, res) => {
         }
       ]);
         console.log("result is ",result);
-    //   groupbyres = await Blip.aggregate([
-    //     {
-    //         $match:{
-    //             _id : new ObjectId(req.body.blip_id)
-    //         }
-    //     },
-    //     {
-    //       $unwind: '$blipReaction' // Unwind the subdocuments array
-    //     },
-    //     {
-    //       $group: {
-    //         reaction: '$blipReaction.reaction', // Group by the 'name' field within subdocuments
-    //         blipReactionC: { $sum: 1 } // Count subdocuments in each group
-    //       }
-    //     }
-    //   ])
+   
     grp = await Blip.aggregate([
         {
           $unwind: '$blipReaction' // Unwind the subdocuments array
         },
+        // {
+        //   $group: {
+        //     _id: '$blipReaction.reaction', // Group by the 'name' field within subdocuments
+        //     totalCount: { $sum: 1 } // Count subdocuments in each group
+        //   }
+        // },
         {
-          $group: {
-            _id: '$blipReaction.reaction', // Group by the 'name' field within subdocuments
-            totalCount: { $sum: 1 } // Count subdocuments in each group
-          }
+          $lookup: {
+              from: "users", // name of the comment collection
+              localField: "blipReaction.reaction_user_id",
+              foreignField: "_id",
+              as: "user_details"
         }
+      },
+        {
+          $unwind: '$user_details'
+        },
+        {
+          $project: {
+              // project fields as needed
+              "blipReaction.reaction": 1,
+              "blipReaction.updatedAt":1,
+              "user_details.webName": 1,
+              "user_details.fullName": 1,
+              "user_details.profilePicture": 1,// Include other user details you may need
+          }
+      }
       ])
       console.log("blip count reactionwise ",grp)
         res.status(StatusCodes.OK).json({statusCode:0,
@@ -484,12 +486,33 @@ const fetchAllBlip = async (req, res) => {
         {
           $unwind: '$blipRating' // Unwind the subdocuments array
         },
+        // {
+        //   $group: {
+        //     _id: '$blipRating.ratingno', // Group by the 'name' field within subdocuments
+        //     totalCount: { $sum: 1 } // Count subdocuments in each group
+        //   }
+        // }
         {
-          $group: {
-            _id: '$blipRating.ratingno', // Group by the 'name' field within subdocuments
-            totalCount: { $sum: 1 } // Count subdocuments in each group
-          }
+          $lookup: {
+              from: "users", // name of the comment collection
+              localField: "blipRating.rating_user_id",
+              foreignField: "_id",
+              as: "user_details"
         }
+      },
+        {
+          $unwind: '$user_details'
+        },
+        {
+          $project: {
+              // project fields as needed
+              "blipRating.ratingno": 1,
+              "blipRating.updatedAt":1,
+              "user_details.webName": 1,
+              "user_details.fullName": 1,
+              "user_details.profilePicture": 1,// Include other user details you may need
+          }
+      }
       ])
       console.log("blip count ratings ",RatingCount)
         res.status(StatusCodes.OK).json({statusCode:0,
