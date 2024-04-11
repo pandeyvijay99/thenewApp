@@ -402,17 +402,14 @@ const fetchAllBlip = async (req, res) => {
         }
       ]);
         console.log("result is ",result);
+        const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+        const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+        const offset = (pageNumber - 1) * pageSize; // Calculate offset
    
     grp = await Blip.aggregate([
         {
           $unwind: '$blipReaction' // Unwind the subdocuments array
         },
-        // {
-        //   $group: {
-        //     _id: '$blipReaction.reaction', // Group by the 'name' field within subdocuments
-        //     totalCount: { $sum: 1 } // Count subdocuments in each group
-        //   }
-        // },
         {
           $lookup: {
               from: "users", // name of the comment collection
@@ -433,6 +430,12 @@ const fetchAllBlip = async (req, res) => {
               "user_details.fullName": 1,
               "user_details.profilePicture": 1,// Include other user details you may need
           }
+      },
+      {
+        $skip: offset
+      },
+      {
+        $limit: pageSize
       }
       ])
       console.log("blip count reactionwise ",grp)
@@ -477,6 +480,9 @@ const fetchAllBlip = async (req, res) => {
         }
       ]);
         console.log("result is ",result);
+        const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+        const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+        const offset = (pageNumber - 1) * pageSize; // Calculate offset
       RatingCount = await Blip.aggregate([
         {
             $match:{
@@ -486,12 +492,6 @@ const fetchAllBlip = async (req, res) => {
         {
           $unwind: '$blipRating' // Unwind the subdocuments array
         },
-        // {
-        //   $group: {
-        //     _id: '$blipRating.ratingno', // Group by the 'name' field within subdocuments
-        //     totalCount: { $sum: 1 } // Count subdocuments in each group
-        //   }
-        // }
         {
           $lookup: {
               from: "users", // name of the comment collection
@@ -512,6 +512,12 @@ const fetchAllBlip = async (req, res) => {
               "user_details.fullName": 1,
               "user_details.profilePicture": 1,// Include other user details you may need
           }
+      },
+      {
+        $skip: offset
+      },
+      {
+        $limit: pageSize
       }
       ])
       console.log("blip count ratings ",RatingCount)
