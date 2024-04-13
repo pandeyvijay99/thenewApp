@@ -221,89 +221,152 @@ const fetchAllBlip = async (req, res) => {
     console.log("inside validation ")
     
     //  const data = await Blip.find({});
-    // const result = await   Blip.aggregate([
-    //     {
-    //         $lookup: {
-    //             from: "users", // name of the comment collection
-    //             localField: "mobileNumber",
-    //             foreignField: "mobileNumber",
-    //             as: "user_details"
-    //         }
-    //     },
-    //     {
-    //        $project: {
-    //            _id: 1,
-    //            tags: 1,
-    //            hashtag:1,
-    //            count:1,
-    //            user_details: {$arrayElemAt:["$user_details",0]},
-    //            blipUrl:1,
-    //            createdAt:1,
-    //        }
-    //    }
-    //  ]);
-    //  debugger;
-    //  const records = await Comment.aggregate([
-    //     {
-    //       $group: {
-    //         _id: '$blip_id',
-    //         count: { $sum: 1 } // this means that the count will increment by 1
-    //       }
-    //     }
-    //   ]);
-    //  console.log("user details ",records)
-    const result = await Blip.aggregate([
+    const result = await   Blip.aggregate([ 
+      // {
+      //       $lookup: {
+      //           from: "users", // name of the comment collection
+      //           localField: "mobileNumber",
+      //           foreignField: "mobileNumber",
+      //           as: "user_details"
+      //       }
+      //   },
+        
+      
+      //   {
+      //      $project: {
+      //          _id: 1,
+      //          tags: 1,
+      //          hashtag:1,
+      //          count:1,
+      //          comment:1,
+      //          user_details: {$arrayElemAt:["$user_details",0]},
+      //         //  comment_user_details:{$arrayElemAt:["$comment_user_details",0]},
+      //          blipUrl:1,
+      //          createdAt:1,
+      //         //  blip.blipReaction:1
+      //         //  blipReaction: { $size: '$blipReaction' }
+      //      }
+      //  }
+      // {
+      //   $lookup: {
+      //     from: 'comments',
+      //     let: { stringRef: '$blip_id' },
+      //     pipeline: [
+      //       {
+      //         $match: {
+      //           $expr: {
+      //             $eq: ['$_id', '$$stringRef'] // Compare ObjectId with string reference field
+      //           }
+      //         }
+      //       }
+      //     ],
+      //     as: 'comments'
+      //   }
+      // },
+      // {
+      //   $lookup:{
+      //     from:"comments",
+      //     localField:"blip_id",
+      //     foreignField:"_id",
+      //     as:"comments"   
+      //   }
+      // },
       {
-          $unwind: "$blipReaction" // unwind the first subDocuments array
-      },
-      {
-          $unwind: "$blipRating" // unwind the second subDocuments array
-      },
-    {
-      $group: {
-        _id:"$_id",
-           reactionCount: { $sum: "$blipReaction.reaction" }, // count the size of subDocuments1 array
-           ratingCount: { $sum: "$blipRating.ratingno" } // count the size of subDocuments2 array
-      }
-  },
-    {
         $project: {
-            _id: 1,
-            reactionCount: 1, // calculate total size
-            ratingCount:1
+          _id: 1,
+          blipUrl: 1,
+          tags: 1,
+          hashtag:1,
+          comments:1,
+          // ratingCount: { $size: '$blipRating' }, // Count of ratings sub-documents
+          ratingCount:  {
+            $cond: {
+              if: { $isArray: "$blipRating" }, // Check if reactions field is an array
+              then: { $size: "$blipRating" },   // If reactions is an array, return its size
+              else: 0                           // If reactions is not an array or doesn't exist, return 0
+            }
+          },
+          reactionCount: {
+            $cond: {
+              if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
+              then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+              else: 0                           // If reactions is not an array or doesn't exist, return 0
+            }
+          },
+          // commentCount:  {
+          //   $cond: {
+          //     if: { $isArray: "$comments" }, // Check if reactions field is an array
+          //     then: { $size: "$comments" },   // If reactions is an array, return its size
+          //     else: 0                           // If reactions is not an array or doesn't exist, return 0
+          //   }
+          // },
+    
+          
         }
-    }
-      // {
-      //     $lookup: {
-      //         from: "comments", // name of the collection you want to lookup
-      //         localField: "blip_id",
-      //         foreignField: "_id",
-      //         as: "commentsData"
-      //     }
-      // },
-      // {
-      //     $unwind : "$commentsData"
-      // },
-      // {
-      //     $lookup: {
-      //         from: "otherCollection", // name of the collection you want to lookup
-      //         localField: "subDocuments2.userId",
-      //         foreignField: "_id",
-      //         as: "userDetails2"
-      //     }
-      // },
-      // {
-      //     $unwind: "$userDetails1" // unwind the userDetails1 array
-      // },
-      // {
-      //     $unwind: "$userDetails2" // unwind the userDetails2 array
-      // },
-      // Your other aggregation stages here
-  ])
+      }
+     ]);
+     debugger;
+     const totalComment = await Comment.aggregate([
+        {
+          $group: {
+            _id: '$blip_id',
+            count: { $sum: 1 } // this means that the count will increment by 1
+          }
+        }
+      ]);
+    //  console.log("user details ",records)
+  //   const result = await Blip.aggregate([
+  //     {
+  //         $unwind: "$blipReaction" // unwind the first subDocuments array
+  //     },
+  //     {
+  //         $unwind: "$blipRating" // unwind the second subDocuments array
+  //     },
+  //   {
+  //     $group: {
+  //       _id:"$_id",
+  //          reactionCount: { $sum: "$blipReaction.reaction" }, // count the size of subDocuments1 array
+  //          ratingCount: { $sum: "$blipRating.ratingno" } // count the size of subDocuments2 array
+  //     }
+  // },
+  //   {
+  //       $project: {
+  //           _id: 1,
+  //           reactionCount: 1, // calculate total size
+  //           ratingCount:1
+  //       }
+  //   }
+  //     // {
+  //     //     $lookup: {
+  //     //         from: "comments", // name of the collection you want to lookup
+  //     //         localField: "blip_id",
+  //     //         foreignField: "_id",
+  //     //         as: "commentsData"
+  //     //     }
+  //     // },
+  //     // {
+  //     //     $unwind : "$commentsData"
+  //     // },
+  //     // {
+  //     //     $lookup: {
+  //     //         from: "otherCollection", // name of the collection you want to lookup
+  //     //         localField: "subDocuments2.userId",
+  //     //         foreignField: "_id",
+  //     //         as: "userDetails2"
+  //     //     }
+  //     // },
+  //     // {
+  //     //     $unwind: "$userDetails1" // unwind the userDetails1 array
+  //     // },
+  //     // {
+  //     //     $unwind: "$userDetails2" // unwind the userDetails2 array
+  //     // },
+  //     // Your other aggregation stages here
+  // ])
      if (result) {
            console.log("user ", result);
         res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-        data:result
+        data:{result,totalComment}
   });
  
  } else {
