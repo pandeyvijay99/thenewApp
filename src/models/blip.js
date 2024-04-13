@@ -56,7 +56,10 @@ blipReaction:[{
      required: true
    },
    createdAt: { type: Date, default: Date.now },
-   updatedAt: { type: Date, default: Date.now }
+   updatedAt: { type: Date, default: Date.now },
+   reactionValue:{
+      type:String
+   },
    
  }],
  blipRating:[{

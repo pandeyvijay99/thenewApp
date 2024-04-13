@@ -1,14 +1,14 @@
 //removed slug
 const mongoose = require("mongoose");
-const commentSchema = new mongoose.Schema({
-    blip_id: {
+const subcommentSchema = new mongoose.Schema({
+   parent_comment_id: {
         type: String,
         require: true,
-        ref: "blip_id",
+        ref: "comment_id",
      },
-     user_id: {
+     comment_user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user_id",
+      ref: "comment_user_id",
       required: true
   },
   comment: {
@@ -32,23 +32,9 @@ const commentSchema = new mongoose.Schema({
        type:String
     },
     
-  }],
-  subComment:[{
-    comment_user_id:mongoose.Schema.Types.ObjectId,
-    comment: {
-        type: String,
-        require: true,
-        index:true
-     },
-     comment_user_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "comment_user_id",
-      required: true
-  },
-
   }]
 },
 {
      timestamps: true 
 });
-module.exports = mongoose.model("Comment", commentSchema);
+module.exports = mongoose.model("SubComment", subcommentSchema);

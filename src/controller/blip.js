@@ -1,6 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const Blip = require("../models/blip");
 const Comment = require("../models/comment");
+const SubComment = require("../models/subcomment");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const shortid = require("shortid");
@@ -10,6 +11,7 @@ const { v1: uuidv1 } = require("uuid");
 const multer = require('multer');
 const path = require('path');
 const User = require("../models/auth");
+const reactionD = require("../helper");
 require("dotenv").config();
 
 
@@ -217,35 +219,30 @@ const fetchAllBlip = async (req, res) => {
   try {
     debugger;
     console.log("inside validation ")
-    //  if (!req.body.countryCode || !req.body.mobileNumber) {
-    //     res.status(StatusCodes.BAD_REQUEST).json({
-    //        message: "Please Enter Valid Number with country Code",
-    //     });
-    //  }
- 
+    
     //  const data = await Blip.find({});
-    const result = await   Blip.aggregate([
-        {
-            $lookup: {
-                from: "users", // name of the comment collection
-                localField: "mobileNumber",
-                foreignField: "mobileNumber",
-                as: "user_details"
-            }
-        },
-        {
-           $project: {
-               _id: 1,
-               tags: 1,
-               hashtag:1,
-               count:1,
-               user_details: {$arrayElemAt:["$user_details",0]},
-               blipUrl:1,
-               createdAt:1,
-           }
-       }
-     ]);
-     debugger;
+    // const result = await   Blip.aggregate([
+    //     {
+    //         $lookup: {
+    //             from: "users", // name of the comment collection
+    //             localField: "mobileNumber",
+    //             foreignField: "mobileNumber",
+    //             as: "user_details"
+    //         }
+    //     },
+    //     {
+    //        $project: {
+    //            _id: 1,
+    //            tags: 1,
+    //            hashtag:1,
+    //            count:1,
+    //            user_details: {$arrayElemAt:["$user_details",0]},
+    //            blipUrl:1,
+    //            createdAt:1,
+    //        }
+    //    }
+    //  ]);
+    //  debugger;
     //  const records = await Comment.aggregate([
     //     {
     //       $group: {
@@ -255,6 +252,54 @@ const fetchAllBlip = async (req, res) => {
     //     }
     //   ]);
     //  console.log("user details ",records)
+    const result = await Blip.aggregate([
+      {
+          $unwind: "$blipReaction" // unwind the first subDocuments array
+      },
+      {
+          $unwind: "$blipRating" // unwind the second subDocuments array
+      },
+    {
+      $group: {
+        _id:"$_id",
+           reactionCount: { $sum: "$blipReaction.reaction" }, // count the size of subDocuments1 array
+           ratingCount: { $sum: "$blipRating.ratingno" } // count the size of subDocuments2 array
+      }
+  },
+    {
+        $project: {
+            _id: 1,
+            reactionCount: 1, // calculate total size
+            ratingCount:1
+        }
+    }
+      // {
+      //     $lookup: {
+      //         from: "comments", // name of the collection you want to lookup
+      //         localField: "blip_id",
+      //         foreignField: "_id",
+      //         as: "commentsData"
+      //     }
+      // },
+      // {
+      //     $unwind : "$commentsData"
+      // },
+      // {
+      //     $lookup: {
+      //         from: "otherCollection", // name of the collection you want to lookup
+      //         localField: "subDocuments2.userId",
+      //         foreignField: "_id",
+      //         as: "userDetails2"
+      //     }
+      // },
+      // {
+      //     $unwind: "$userDetails1" // unwind the userDetails1 array
+      // },
+      // {
+      //     $unwind: "$userDetails2" // unwind the userDetails2 array
+      // },
+      // Your other aggregation stages here
+  ])
      if (result) {
            console.log("user ", result);
         res.status(StatusCodes.OK).json({statusCode:"0",message:"",
@@ -276,6 +321,16 @@ const fetchAllBlip = async (req, res) => {
 
  const postReaction = async (req, res) => {
     // console.log("validation ")
+    // console.log("helperdata ",reactionD.reactionemoji[4]._id);
+    let arr = reactionD.reactionemoji;
+    let mapped = arr.map(ele => ele._id);
+    let found = mapped.includes(req.body.reaction);
+    if(found==true){
+      reactionValue = reactionD.reactionemoji[req.body.reaction].emoji;
+    }
+    // console.log("found ",found)
+    // console.log(reactionD.reactionemoji.includes(req.body.reaction)); // true
+
   try {
     debugger;
     console.log("inside validation ")
@@ -299,12 +354,16 @@ const fetchAllBlip = async (req, res) => {
                 user_id = decoded._id;
                 console.log("blipdecoded ",decoded._id);
         }
+        /*reactions */
+        
+        /**/
         const ObjectId = require('mongoose').Types.ObjectId
         user_id = new ObjectId(user_id)
         console.log("user_id ", user_id)
         const blipReaction ={
             reaction_user_id:user_id,
-            reaction:req.body.reaction
+            reaction:req.body.reaction,
+            reactionValue:reactionValue
         }
         debugger;
         // const ObjectId = require('mongoose').Types.ObjectId
@@ -429,6 +488,7 @@ const fetchAllBlip = async (req, res) => {
               "user_details.webName": 1,
               "user_details.fullName": 1,
               "user_details.profilePicture": 1,// Include other user details you may need
+              "blipReaction.reactionValue":1
           }
       },
       {

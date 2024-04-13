@@ -1,5 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const Comment = require("../models/comment");
+const subcommentModel =  require("../models/subcomment")
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { BlobServiceClient,StorageSharedKeyCredential } = require("@azure/storage-blob");
@@ -8,6 +9,7 @@ const { v1: uuidv1 } = require("uuid");
 const multer = require('multer');
 const path = require('path');
 const mongoose = require("mongoose");
+const reactionD = require("../helper");
 require("dotenv").config();
 
 
@@ -70,12 +72,6 @@ const postComment = async (req, res) => {
            message: "Coment is required",
         });
      }
-   //   if (!req.body.comment_user_id || !req.body.comment_user_id) {
-   //      res.status(StatusCodes.BAD_REQUEST).json({
-   //         message: "comment_user_id is required",
-   //      });
-   //   }
-     /*code for getting user_id from  header*/
         const authHeader = (req.headers.authorization)?req.headers.authorization:null;
         if(authHeader){
             const token =  authHeader.split(' ')[1];
@@ -87,20 +83,30 @@ const postComment = async (req, res) => {
         }
         const commentData =[{
             comment_user_id:comment_user_id,
-            comment:req.body.comment
+            comment:req.body.comment,
+            parent_comment_id:req.body.parent_comment_id
+
         }]
 
         debugger;
         const ObjectId = require('mongoose').Types.ObjectId
-        const filter = { _id: new ObjectId( req.body.parent_commnet_id) };
-        console.log("filer is ",filter);
-        const doc = await Comment.findOneAndUpdate(filter, {$push:{subComment:commentData}}, {
-          returnOriginal: false
-        });
-        res.status(StatusCodes.OK).json({statusCode:0,
-         message:"",   
-         data: { doc },
-      });
+        // const filter = { _id: new ObjectId( req.body.parent_commnet_id) };
+        // console.log("filer is ",filter);
+        // const doc = await subcommentModel.findOneAndUpdate(filter, {$push:{subComment:commentData}}, {
+        //   returnOriginal: false
+        // });
+
+        subcommentModel.create(commentData).then((data, err) => {
+          if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+          });
+      console.log('comment data', commentData);
+      
+      return res.status(200).send({statusCode:0,message:'',data:"sub-Comment added successfully."});
+
+      //   res.status(StatusCodes.OK).json({statusCode:0,
+      //    message:"",   
+      //    data: { doc },
+      // });
  
  } catch (error) {
     console.log("catch ", error );
@@ -123,70 +129,12 @@ const fetchComment = async (req, res) => {
      }
       debugger;
       let user_id="";
-      // var limit = req.body.limit
-      // , offset = Math.max(0, req.body.offset)
-      //    //   const data = await Comment.find({blip_id:req.body.blip_id},{comment:1,user_id:1}).limit(limit)
-         //   .skip(limit * offset);
-   
-    
-//       debugger
-//        if(data.length>0)
-//          user_id = (data[0].user_id)?(data[0].user_id):"";
-     
-//     if(user_id){
-//       console.log("data is data ",data[0].user_id )
-//      const result = await Comment.aggregate().lookup({
-//         from:"users",
-//         localField:"comment_user_id",
-//         foreignField:"_id",
-//         as:"user_data"
-//      },
-//      {
-//         $project: {
-//             _id: 1,
-//             comment: 1,
-//             user_id:1,
-//             user_details: {
-//               fullName: 1,
-//               profilePicture: 1,
-//               _id:1,
-//               webName: 1
-//                 // include other fields from user collection as needed
-//             }
-//         }
-//     }
-     
-//      )
-//      totalCount = result.length;
-//     console.log("user details ",data[0])
-// //     result = data.map((data) => {
-// //       data["totalCount"] = totalCount;
-// //       return data;
-// //   });
-// // data.push({"totalCount":totalCount})
-//      if (data) {
-//         //    console.log("user ", data);
-//         res.status(StatusCodes.OK).json({statusCode:0,message:"",
-//         data:{result,totalCount:totalCount}
-//   });
-// }else{
-//     res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
-//     data:null
-// })
-//  }
-//  } else {
-//   res.status(StatusCodes.OK).json({statusCode:1,
-//       message: "Comment does not exist..!",
-//       data:null
-//   });
-//  }
-
+ 
 const result = await   Comment.aggregate([
    {
        $match:{
          blip_id:req.body.blip_id
-       } ,
-       
+       } 
    },
    {
        $lookup: {
@@ -199,16 +147,8 @@ const result = await   Comment.aggregate([
    {
       $project: {
           _id: 1,
-          comment: 1,
+          comment:1,
           user_details: {$arrayElemAt:["$user_details",0]},
-         //  user_details: {
-         //    fullName: 1,
-         //    profilePicture: 1,
-         //    _id:1,
-         //    webName: 1
-         //      // include other fields from user collection as needed
-         //  },
-         
       },
       
   },
@@ -219,20 +159,7 @@ console.log("data is ", result);
 //   data.push({totalCount:result.length})
 console.log("data lenght ", result.length);
 if(result.length>0){
-   // console.log("type of ",(data[0].subComment).length);
    let totalCount = result.length;
-   // user_id = (data[0].user_id)?(data[0].user_id):"";
-
-   // if(user_id){
-   //    console.log("data is data ",data[0].user_id )
-   //   const data = await Comment.aggregate().lookup({
-   //      from:"users",
-   //      localField:"user_id",
-   //      foreignField:"_id",
-   //      as:"datav"
-   //   })
-
-   //  console.log("user details ",data[0])
      if (result) {
         //    console.log("user ", data);
         res.status(StatusCodes.OK).json({statusCode:0,message:"",
@@ -273,77 +200,63 @@ if(result.length>0){
    var limit = req.body.limit
   , offset = Math.max(0, req.body.offset)
    const ObjectId = require('mongoose').Types.ObjectId
-     const filter = { _id: new ObjectId( req.body.comment_id) };
-      // const data = await Comment.find({_id:new ObjectId( req.body.comment_id)}).select({ "subComment": 1}).limit(limit)
-      // .skip(limit * offset);;
-      //  console.log("data",data[0].subComment)
+   const filter = { parent_comment_id:  req.body.comment_id };
+  //  const result = await   Comment.aggregate([
+  //        {
+  //            $match:{
+  //              _id: new ObjectId( req.body.comment_id)
+  //            } // unwind the comments array
+  //        },
+  //        {
+  //           $unwind :"$subComment"         
+  //        },
+  //        {
+  //            $lookup: {
+  //                from: "users", // name of the comment collection
+  //                localField: "subComment.comment_user_id",
+  //                foreignField: "_id",
+  //                as: "user_details"
+  //            }
+  //        },
+  //        {
+  //           $project: {
+  //               _id: 1,
+  //               subComment: 1,
+  //               user_details: {$arrayElemAt:["$user_details",0]},
+               
+  //           }
+  //       }
+  //    ]);
   
-      
-
-       debugger;
-   const result = await   Comment.aggregate([
-         {
-             $match:{
-               _id: new ObjectId( req.body.comment_id)
-             } // unwind the comments array
-         },
-         {
-            $unwind :"$subComment"         
-         },
-         {
-             $lookup: {
-                 from: "users", // name of the comment collection
-                 localField: "subComment.comment_user_id",
-                 foreignField: "_id",
-                 as: "user_details"
-             }
-         },
-         {
-            $project: {
-                _id: 1,
-                subComment: 1,
-                user_details: {$arrayElemAt:["$user_details",0]},
-               //  user_details: {
-               //    fullName: 1,
-               //    profilePicture: 1,
-               //    _id:1,
-               //    webName: 1
-               //      // include other fields from user collection as needed
-               //  }
-            }
-        }
-     ]);
+  const result = await   subcommentModel.aggregate([
+    {
+      $match :{
+        parent_comment_id :req.body.comment_id
+      }
+    },
+    {
+                 $lookup: {
+                     from: "users", // name of the comment collection
+                     localField: "comment_user_id",
+                     foreignField: "_id",
+                     as: "user_details"
+                 }
+    },
+    {
+                $project: {
+                    _id: 1,
+                    comment: 1,
+                    user_details: {$arrayElemAt:["$user_details",0]},
+                   
+                }
+    }
+  ])
      console.log("data is ", result);
-   //   data.push({totalCount:result.length})
      console.log("data lenght ", result.length);
-
-
-
-
-
-
-
-
-       debugger;
-      //  data = Object.assign({}, ...data);
-      //  console.log("object dtaa", data)
        if(result.length>0){
-         // console.log("type of ",(data[0].subComment).length);
          let totalCount = result.length;
-         // user_id = (data[0].user_id)?(data[0].user_id):"";
-      
-         // if(user_id){
-         //    console.log("data is data ",data[0].user_id )
-         //   const data = await Comment.aggregate().lookup({
-         //      from:"users",
-         //      localField:"user_id",
-         //      foreignField:"_id",
-         //      as:"datav"
-         //   })
-      
-         //  console.log("user details ",data[0])
+        
            if (result) {
-              //    console.log("user ", data);
               res.status(StatusCodes.OK).json({statusCode:0,message:"",
               data:{result,totalCount:totalCount}
         });
@@ -363,4 +276,146 @@ if(result.length>0){
      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
     }
    };
- module.exports = {postComment,postSubComment,fetchComment,fetchSubComment};
+
+/*Post Comment functionality */
+
+const postCommentReaction = async (req, res) => {
+  
+  let arr = reactionD.reactionemoji;
+  let mapped = arr.map(ele => ele._id);
+  let found = mapped.includes(req.body.reaction);
+  if(found==true){
+    reactionValue = reactionD.reactionemoji[req.body.reaction].emoji;
+  }
+  // console.log("found ",found)
+  // console.log(reactionD.reactionemoji.includes(req.body.reaction)); // true
+
+try {
+  debugger;
+  console.log("inside validation ")
+   if (!req.body.reaction || !req.body.reaction) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+         message: "reaction is required",
+      });
+   }
+   if (!req.body.comment_id || !req.body.comment_id) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+         message: "comment_id is required",
+      });
+   }
+   /*code for getting user_id from  header*/
+      const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+      if(authHeader){
+          const token =  authHeader.split(' ')[1];
+          if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+              const decoded = jwt.verify(token, process.env.JWT_SECRET);
+              console.log("token" , token);
+              user_id = decoded._id;
+              console.log("comment user decoded ",decoded._id);
+      }
+      /*reactions */
+      
+      /**/
+      const ObjectId = require('mongoose').Types.ObjectId
+      user_id = new ObjectId(user_id)
+      console.log("user_id ", user_id)
+      const commentReaction ={
+          reaction_user_id:user_id,
+          reaction:req.body.reaction,
+          reactionValue:reactionValue
+      }
+      debugger;
+      // const ObjectId = require('mongoose').Types.ObjectId
+      const filter = { _id: new ObjectId( req.body.comment_id) };
+      console.log("filer is ",filter);
+      const result = await Comment.findOneAndUpdate(filter, {$push:{commentReaction:commentReaction}}, {
+        returnOriginal: false
+      });
+      res.status(StatusCodes.OK).json({statusCode:0,
+       message:"",   
+       data: { result },
+    });
+
+} catch (error) {
+  console.log("catch ", error );
+ res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+}
+};
+/*End of code*/
+
+const fetchCommentReaction = async (req, res) => {
+   
+  try {
+    debugger;
+    console.log("inside count ")
+     
+     if (!req.body.comment_id || !req.body.comment_id) {
+        res.status(StatusCodes.BAD_REQUEST).json({
+           message: "comment_id is required",
+        });
+     }
+     
+        debugger;
+         const ObjectId = require('mongoose').Types.ObjectId
+   
+    result = await Comment.aggregate([
+        {
+          $match: { _id: new ObjectId(req.body.comment_id) } // Match the parent document with the given ID
+        },
+        {
+          $project: {
+            totalReaction: { $size: '$commentReaction' } // Project a field with the size of the subdocuments array
+          }
+        }
+      ]);
+        console.log("result is ",result);
+        const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+        const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+        const offset = (pageNumber - 1) * pageSize; // Calculate offset
+   
+    grp = await Comment.aggregate([
+        {
+          $unwind: '$commentReaction' // Unwind the subdocuments array
+        },
+        {
+          $lookup: {
+              from: "users", // name of the comment collection
+              localField: "commentReaction.reaction_user_id",
+              foreignField: "_id",
+              as: "user_details"
+        }
+      },
+        {
+          $unwind: '$user_details'
+        },
+        {
+          $project: {
+              // project fields as needed
+              "commentReaction.reaction": 1,
+              "commentReaction.updatedAt":1,
+              "user_details.webName": 1,
+              "user_details.fullName": 1,
+              "user_details.profilePicture": 1,// Include other user details you may need
+              "commentReaction.reactionValue":1
+          }
+      },
+      {
+        $skip: offset
+      },
+      {
+        $limit: pageSize
+      }
+      ])
+      console.log("blip count reactionwise ",grp)
+        res.status(StatusCodes.OK).json({statusCode:0,
+         message:"",   
+         data: { result ,grp},
+      });
+ 
+ } catch (error) {
+    console.log("catch ", error );
+   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+  }
+ }; 
+
+ module.exports = {postComment,postSubComment,fetchComment,fetchSubComment,postCommentReaction,fetchCommentReaction};

@@ -7,7 +7,7 @@ const {
   validateSignIpRequest,
 } = require("../validators/auth");
 const { fetchBlip, uploadProfilePic ,uploadBlipFile,fetchAllBlip,postReaction,postRating,totalReaction,totalRating} = require("../controller/blip");
-const { postComment,postSubComment,fetchComment,fetchSubComment} = require("../controller/comment");
+const { postComment,postSubComment,fetchComment,fetchSubComment,postCommentReaction,fetchCommentReaction} = require("../controller/comment");
 const userAuthCheck = require("../middleware/auth");
 
 router.route("/signin").post(validateSignIpRequest, isRequestValidated, signIn);
@@ -31,5 +31,7 @@ router.route("/postReaction").post(userAuthCheck,postReaction)
 router.route("/postRating").post(userAuthCheck,postRating)
 router.route("/totalReaction").post(totalReaction)
 router.route("/totalRating").post(totalRating)
+router.route("/postCommentReaction").post(postCommentReaction)
+router.route("/fetchCommentReaction").post(fetchCommentReaction)
 
 module.exports = router;
