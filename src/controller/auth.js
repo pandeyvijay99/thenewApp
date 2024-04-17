@@ -259,4 +259,37 @@ const searchWebName = async (req, res) => {
  }
 };
 
-module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails,searchWebName};
+/*Believers Blip  */
+const believer = async (req, res) => {
+
+   try{
+    /*code for getting user_id from  header*/
+    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+    if(authHeader){
+        const token =  authHeader.split(' ')[1];
+        if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log("token" , token);
+            user_id = decoded._id;
+            console.log("user id ",decoded._id);
+    }
+    if (!req.body.believers && (req.body.believers).length==0) {
+     res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Provide atleast one believer",
+     });
+  }
+  const ObjectId = require('mongoose').Types.ObjectId
+  const conditions = {  _id: new ObjectId(user_id) };
+  const result = await User.updateMany(conditions,{ $addToSet: { believer: { $each: req.body.believers } } }, { multi: true })
+  return res.status(StatusCodes.OK).json({statusCode:0,
+   message: "",data:result
+});
+  debugger
+   }catch(error){
+      return res.status(StatusCodes.OK).json({statusCode:1,
+         message: "something went wrong",data:null
+      });
+   }
+ }; 
+ 
+module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails,searchWebName,believer};

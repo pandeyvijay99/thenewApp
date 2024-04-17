@@ -654,4 +654,138 @@ const fetchAllBlip = async (req, res) => {
    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
  }; 
- module.exports = {fetchBlip,uploadProfilePic,uploadBlipFile ,fetchAllBlip,postReaction,postRating,totalReaction,totalRating};
+/**/
+
+const fetchGroupRating = async (req, res) => {
+  // console.log("validation ")
+try {
+  debugger;
+  console.log("inside count ")
+   
+   if (!req.body.blip_id || !req.body.blip_id) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+         message: "blip_id is required",
+      });
+   }
+   
+      debugger;
+       const ObjectId = require('mongoose').Types.ObjectId
+      
+
+      // console.log("result is ",result);
+      const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+      const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+      const offset = (pageNumber - 1) * pageSize; // Calculate offset
+    RatingCount = await Blip.aggregate([
+      {
+          $match:{
+              _id : new ObjectId(req.body.blip_id)
+          }
+      },
+      {
+        $unwind: '$blipRating' // Unwind the subdocuments array
+      },
+      {
+        $group: {
+          _id: '$blipRating.ratingno',
+          count: { $sum: 1 } 
+        },
+      }
+    ])
+    console.log("blip count ratings ",RatingCount)
+      res.status(StatusCodes.OK).json({statusCode:0,
+       message:"",   
+       data:  RatingCount
+    });
+
+} catch (error) {
+  console.log("catch ", error );
+ res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+}
+}; 
+/*Blip Views */
+const blipView = async (req, res) => {
+  // console.log("validation ")
+try {
+  debugger;
+  console.log("inside count ")
+   
+   if (!req.body.blip_id || !req.body.blip_id) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+         message: "blip_id is required",
+      });
+   }
+   
+      debugger;
+       const ObjectId = require('mongoose').Types.ObjectId
+
+
+       const conditions = {  _id: new ObjectId(req.body.blip_id) };
+
+// Define the update operation
+const update = { $inc: { views: 1 } }; // $inc is used to increment a value
+
+// Options to findOneAndUpdate method (optional)
+const options = {
+  new: true, // return the modified document rather than the original
+};
+viewCount = await Blip.findOneAndUpdate(conditions, update, options);
+    // viewCount = await Blip.findOneAndUpdate({ _id: new ObjectId(req.body.blip_id) },{ $inc: { views: 1 } }, {new: true });
+    console.log("blip views ",viewCount)
+      res.status(StatusCodes.OK).json({statusCode:0,
+       message:"",   
+       data:  viewCount
+    });
+
+} catch (error) {
+  console.log("catch ", error );
+ res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+}
+}; 
+
+/*Trending Blip  */
+const trendingViews = async (req, res) => {
+  const pipeline = [
+    {
+      $project: {
+        views: 1,
+        ratingCount:  {
+          $cond: {
+            if: { $isArray: "$blipRating" }, // Check if reactions field is an array
+            then: { $size: "$blipRating" },   // If reactions is an array, return its size
+            else: 0                           // If reactions is not an array or doesn't exist, return 0
+          }
+        },// Calculate total ratings for each video
+      }
+    },
+    {
+      $sort: {
+        views: -1, // Sort by views in descending order
+        totalRatings: -1 // Sort by total ratings in descending order
+      }
+    }
+  ];
+  debugger
+  // Execute aggregation
+  Blip.aggregate(pipeline)
+    .then(results => {
+      console.log('Results:', results);
+      res.status(StatusCodes.OK).json({statusCode:0,
+        message:"",   
+        data:  results
+     });
+
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      res.status(StatusCodes.OK).json({statusCode:1,
+        message:"something went wrong",   
+        data:  null
+     });
+    });
+}; 
+
+
+ module.exports = {fetchBlip,uploadProfilePic,uploadBlipFile ,fetchAllBlip,postReaction,
+            postRating,totalReaction,totalRating,fetchGroupRating,blipView,trendingViews
+          };

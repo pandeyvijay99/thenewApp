@@ -74,7 +74,15 @@ blipReaction:[{
    },
    createdAt: { type: Date, default: Date.now },
    updatedAt: { type: Date, default: Date.now }
- }]
+ }],
+ views: {
+   type:Number,
+   default:0
+},
+believer: {
+   type : Array ,
+   "default" : []
+ },
 },
 
 {
