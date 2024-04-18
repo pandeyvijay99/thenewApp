@@ -83,6 +83,9 @@ believer: {
    type : Array ,
    "default" : []
  },
+ blip_user_id:{
+   type : String
+ }
 },
 
 {

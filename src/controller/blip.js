@@ -151,6 +151,7 @@ const uploadBlipFile = async (req, res) => {
     console.log("token" , token);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     mobileNumber = decoded.mobileNumber;
+    blip_user_id = decoded._id
     console.log("blipdecoded ",decoded.mobileNumber);
     }
     
@@ -198,7 +199,8 @@ const file = req.files.file;
             description:description,
             hashtag:hashtag,
             tags:tags,
-            mobileNumber:mobileNumber
+            mobileNumber:mobileNumber,
+            blip_user_id : blip_user_id
         }
 
         Blip.create(blipData).then((data, err) => {
@@ -218,59 +220,90 @@ const fetchAllBlip = async (req, res) => {
     // console.log("validation ")
   try {
     debugger;
-    console.log("inside validation ")
+    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+        if(authHeader){
+            const token =  authHeader.split(' ')[1];
+            if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                console.log("token" , token);
+                user_id = decoded._id;
+                mobileNumber =decoded.mobileNumber?decoded.mobileNumber:null;
+                console.log("user_id ",decoded._id);
+                console.log("belie",req.body.isBelieverRequire)
+              if( req.body.isBelieverRequire ==false)
+                condition = { mobileNumber:mobileNumber}
+              else if (req.body.isBelieverRequire && req.body.isBelieverRequire ==true){
+                const ObjectId = require('mongoose').Types.ObjectId
+                const user_ids = await User.find({_id:new ObjectId(user_id)},{believer:1})
+                console.log("user_ids ",user_ids[0].believer);
+                condition = { blip_user_id :{
+                  $in :user_ids[0].believer
+                }}
+                console.log("condition",condition)
+              //  return  res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+              //       data:{user_ids}
+              // });
+
+              }
+                debugger
+                const result = await   Blip.aggregate([ 
+                  {
+                    $match :condition
+                  },
+                  {
+                    $project: {
+                      _id: 1,
+                      blipUrl: 1,
+                      tags: 1,
+                      hashtag:1,
+                      comments:1,
+                      ratingCount:  {
+                        $cond: {
+                          if: { $isArray: "$blipRating" }, // Check if reactions field is an array
+                          then: { $size: "$blipRating" },   // If reactions is an array, return its size
+                          else: 0                           // If reactions is not an array or doesn't exist, return 0
+                        }
+                      },
+                      reactionCount: {
+                        $cond: {
+                          if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
+                          then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+                          else: 0                           // If reactions is not an array or doesn't exist, return 0
+                        }
+                      },
+                      
+                    }
+                  }
+                 ]);
+                 debugger;
+                 const totalComment = await Comment.aggregate([
+                  {
+                    $match :condition
+                  },
+                    {
+                      $group: {
+                        _id: '$blip_id',
+                        count: { $sum: 1 } // this means that the count will increment by 1
+                      }
+                    }
+                  ]);
+                 if (result) {
+                       console.log("user ", result);
+                    res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+                    data:{result,totalComment}
+              });
+             
+             } else {
+              res.status(StatusCodes.OK).json({statusCode:1,
+                  message: "Blip does not exist..!",
+                  data:null
+              });
+             }
+        }
     
-    //  const data = await Blip.find({});
+    else{
     const result = await   Blip.aggregate([ 
-      // {
-      //       $lookup: {
-      //           from: "users", // name of the comment collection
-      //           localField: "mobileNumber",
-      //           foreignField: "mobileNumber",
-      //           as: "user_details"
-      //       }
-      //   },
-        
       
-      //   {
-      //      $project: {
-      //          _id: 1,
-      //          tags: 1,
-      //          hashtag:1,
-      //          count:1,
-      //          comment:1,
-      //          user_details: {$arrayElemAt:["$user_details",0]},
-      //         //  comment_user_details:{$arrayElemAt:["$comment_user_details",0]},
-      //          blipUrl:1,
-      //          createdAt:1,
-      //         //  blip.blipReaction:1
-      //         //  blipReaction: { $size: '$blipReaction' }
-      //      }
-      //  }
-      // {
-      //   $lookup: {
-      //     from: 'comments',
-      //     let: { stringRef: '$blip_id' },
-      //     pipeline: [
-      //       {
-      //         $match: {
-      //           $expr: {
-      //             $eq: ['$_id', '$$stringRef'] // Compare ObjectId with string reference field
-      //           }
-      //         }
-      //       }
-      //     ],
-      //     as: 'comments'
-      //   }
-      // },
-      // {
-      //   $lookup:{
-      //     from:"comments",
-      //     localField:"blip_id",
-      //     foreignField:"_id",
-      //     as:"comments"   
-      //   }
-      // },
       {
         $project: {
           _id: 1,
@@ -278,7 +311,6 @@ const fetchAllBlip = async (req, res) => {
           tags: 1,
           hashtag:1,
           comments:1,
-          // ratingCount: { $size: '$blipRating' }, // Count of ratings sub-documents
           ratingCount:  {
             $cond: {
               if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -293,14 +325,6 @@ const fetchAllBlip = async (req, res) => {
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
-          // commentCount:  {
-          //   $cond: {
-          //     if: { $isArray: "$comments" }, // Check if reactions field is an array
-          //     then: { $size: "$comments" },   // If reactions is an array, return its size
-          //     else: 0                           // If reactions is not an array or doesn't exist, return 0
-          //   }
-          // },
-    
           
         }
       }
@@ -314,55 +338,6 @@ const fetchAllBlip = async (req, res) => {
           }
         }
       ]);
-    //  console.log("user details ",records)
-  //   const result = await Blip.aggregate([
-  //     {
-  //         $unwind: "$blipReaction" // unwind the first subDocuments array
-  //     },
-  //     {
-  //         $unwind: "$blipRating" // unwind the second subDocuments array
-  //     },
-  //   {
-  //     $group: {
-  //       _id:"$_id",
-  //          reactionCount: { $sum: "$blipReaction.reaction" }, // count the size of subDocuments1 array
-  //          ratingCount: { $sum: "$blipRating.ratingno" } // count the size of subDocuments2 array
-  //     }
-  // },
-  //   {
-  //       $project: {
-  //           _id: 1,
-  //           reactionCount: 1, // calculate total size
-  //           ratingCount:1
-  //       }
-  //   }
-  //     // {
-  //     //     $lookup: {
-  //     //         from: "comments", // name of the collection you want to lookup
-  //     //         localField: "blip_id",
-  //     //         foreignField: "_id",
-  //     //         as: "commentsData"
-  //     //     }
-  //     // },
-  //     // {
-  //     //     $unwind : "$commentsData"
-  //     // },
-  //     // {
-  //     //     $lookup: {
-  //     //         from: "otherCollection", // name of the collection you want to lookup
-  //     //         localField: "subDocuments2.userId",
-  //     //         foreignField: "_id",
-  //     //         as: "userDetails2"
-  //     //     }
-  //     // },
-  //     // {
-  //     //     $unwind: "$userDetails1" // unwind the userDetails1 array
-  //     // },
-  //     // {
-  //     //     $unwind: "$userDetails2" // unwind the userDetails2 array
-  //     // },
-  //     // Your other aggregation stages here
-  // ])
      if (result) {
            console.log("user ", result);
         res.status(StatusCodes.OK).json({statusCode:"0",message:"",
@@ -375,7 +350,8 @@ const fetchAllBlip = async (req, res) => {
       data:null
   });
  }
- } catch (error) {
+}
+} catch (error) {
     console.log("catch ", error );
    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
@@ -785,7 +761,86 @@ const trendingViews = async (req, res) => {
     });
 }; 
 
+/*BelieversBlip Functionality*/
+const believersBlip = async (req, res) => {
+  // console.log("validation ")
 
+  try {
+  debugger;
+  console.log("inside validation ")
+    /*code for getting user_id from  header*/
+    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+    if(authHeader){
+        const token =  authHeader.split(' ')[1];
+        if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log("token" , token);
+            user_id = decoded._id;
+            console.log("user_id  ",decoded._id);
+    }
+  const user_ids = User.find({_id:new ObjectId(user_id)},{believer:1})
+  console.log("user_ids ",user_ids);
+  return;
+  //  const data = await Blip.find({});
+  const result = await   Blip.aggregate([
+
+
+   {
+
+   },
+    {
+      $project: {
+        _id: 1,
+        blipUrl: 1,
+        tags: 1,
+        hashtag:1,
+        comments:1,
+        // ratingCount: { $size: '$blipRating' }, // Count of ratings sub-documents
+        ratingCount:  {
+          $cond: {
+            if: { $isArray: "$blipRating" }, // Check if reactions field is an array
+            then: { $size: "$blipRating" },   // If reactions is an array, return its size
+            else: 0                           // If reactions is not an array or doesn't exist, return 0
+          }
+        },
+        reactionCount: {
+          $cond: {
+            if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
+            then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+            else: 0                           // If reactions is not an array or doesn't exist, return 0
+          }
+        },
+      }
+    }
+   ]);
+   debugger;
+   const totalComment = await Comment.aggregate([
+      {
+        $group: {
+          _id: '$blip_id',
+          count: { $sum: 1 } // this means that the count will increment by 1
+        }
+      }
+    ]);
+
+   if (result) {
+         console.log("user ", result);
+      res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+      data:{result,totalComment}
+});
+
+} else {
+res.status(StatusCodes.OK).json({statusCode:1,
+    message: "Blip does not exist..!",
+    data:null
+});
+}
+} catch (error) {
+  console.log("catch ", error );
+ res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+}
+};
+/*End of the code*/
  module.exports = {fetchBlip,uploadProfilePic,uploadBlipFile ,fetchAllBlip,postReaction,
             postRating,totalReaction,totalRating,fetchGroupRating,blipView,trendingViews
-          };
+          ,believersBlip};

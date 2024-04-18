@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { fetchBlip, uploadProfilePic ,uploadBlipFile,fetchAllBlip,postReaction,postRating,totalReaction,totalRating,fetchGroupRating,blipView,trendingViews} = require("../controller/blip");
+const { fetchBlip, uploadProfilePic ,uploadBlipFile,fetchAllBlip,postReaction,postRating,totalReaction,totalRating,fetchGroupRating,blipView,trendingViews,believersBlip} = require("../controller/blip");
 const { postComment,postSubComment,fetchComment,fetchSubComment,postCommentReaction,fetchCommentReaction} = require("../controller/comment");
 const userAuthCheck = require("../middleware/auth");
 router.route("/getBlip").post(fetchBlip);
@@ -20,6 +20,7 @@ router.route("/fetchCommentReaction").post(fetchCommentReaction)
 router.route("/fetchGroupRating").post(fetchGroupRating)
 router.route("/blipView").post(blipView)
 router.route("/trendingViews").post(trendingViews)
+router.route("/believersBlip").post(userAuthCheck,believersBlip)
 
 
 module.exports = router;
