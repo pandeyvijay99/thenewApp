@@ -17,5 +17,6 @@ router.route("/validateWebName").post(webNameCheck);
 router.route("/updateUserDetails").put(userAuthCheck,updateUserDetails);
 router.route("/getUserDetails").post(userAuthCheck,getUserDetails);
 router.route("/believers").post(userAuthCheck,believer)
+router.route('/searchWebName').post(searchWebName);
 
 module.exports = router;
