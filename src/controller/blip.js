@@ -269,6 +269,7 @@ const fetchAllBlip = async (req, res) => {
                       hashtag:1,
                       comments:1,
                       user_details:1,
+                      views:1,
                       ratingCount:  {
                         $cond: {
                           if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -338,6 +339,7 @@ const fetchAllBlip = async (req, res) => {
           hashtag:1,
           comments:1,
           user_details:1,
+          views:1,
           ratingCount:  {
             $cond: {
               if: { $isArray: "$blipRating" }, // Check if reactions field is an array
