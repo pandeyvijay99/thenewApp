@@ -220,6 +220,9 @@ const fetchAllBlip = async (req, res) => {
     // console.log("validation ")
   try {
     debugger;
+    const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+    const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+    const offset = (pageNumber - 1) * pageSize; // Calculate offset
     const authHeader = (req.headers.authorization)?req.headers.authorization:null;
         if(authHeader){
             const token =  authHeader.split(' ')[1];
@@ -251,12 +254,21 @@ const fetchAllBlip = async (req, res) => {
                     $match :condition
                   },
                   {
+                    $lookup: {
+                      from: "users", // name of the comment collection
+                      localField: "mobileNumber",
+                      foreignField: "mobileNumber",
+                      as: "user_details"
+                }
+                  },
+                  {
                     $project: {
                       _id: 1,
                       blipUrl: 1,
                       tags: 1,
                       hashtag:1,
                       comments:1,
+                      user_details:1,
                       ratingCount:  {
                         $cond: {
                           if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -273,6 +285,13 @@ const fetchAllBlip = async (req, res) => {
                       },
                       
                     }
+                  },
+                  { "$sort": { "_id": -1 } },
+                  {
+                    $skip: offset
+                  },
+                  {
+                    $limit: pageSize
                   }
                  ]);
                  debugger;
@@ -303,7 +322,14 @@ const fetchAllBlip = async (req, res) => {
     
     else{
     const result = await   Blip.aggregate([ 
-      
+      {
+        $lookup: {
+          from: "users", // name of the comment collection
+          localField: "mobileNumber",
+          foreignField: "mobileNumber",
+          as: "user_details"
+    }
+      },
       {
         $project: {
           _id: 1,
@@ -311,6 +337,7 @@ const fetchAllBlip = async (req, res) => {
           tags: 1,
           hashtag:1,
           comments:1,
+          user_details:1,
           ratingCount:  {
             $cond: {
               if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -327,6 +354,13 @@ const fetchAllBlip = async (req, res) => {
           },
           
         }
+      },
+      { "$sort": { "_id": -1 } },
+      {
+        $skip: offset
+      },
+      {
+        $limit: pageSize
       }
      ]);
      debugger;
