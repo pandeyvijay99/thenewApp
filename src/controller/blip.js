@@ -284,6 +284,8 @@ const fetchAllBlip = async (req, res) => {
                           else: 0                           // If reactions is not an array or doesn't exist, return 0
                         }
                       },
+                      createdAt:1,
+                      updatedAt:1
                       
                     }
                   },
@@ -354,7 +356,8 @@ const fetchAllBlip = async (req, res) => {
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
-          
+          createdAt:1,
+          updatedAt:1
         }
       },
       { "$sort": { "_id": -1 } },
