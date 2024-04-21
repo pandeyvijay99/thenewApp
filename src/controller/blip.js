@@ -193,7 +193,7 @@ const file = req.files.file;
         debugger;
         let description = req.body.captions? req.body.captions:"";
         let hashtag = req.body.hashtags? (req.body.hashtags).split(","):"";
-        let tags = req.body.hashtags?(req.body.peoples).split(","):"";
+        let tags = req.body.peoples?(req.body.peoples).split(","):"";
         const blipData ={
             blipUrl:fileUrl,
             description:description,
