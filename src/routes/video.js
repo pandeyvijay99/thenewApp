@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { fetchVideo,uploadVideoFile,fetchAllVideo,postVideoReaction,postVideoRating,totalVideoReaction,totalVideoRating,fetchGroupVideoRating,videoView,trendingViews,believersVideo} = require("../controller/video");
+const { fetchVideo,uploadVideoFile,fetchAllVideo,postVideoReaction,postVideoRating,totalVideoReaction,totalVideoRating,fetchGroupVideoRating,videoView,trendingViews,believersVideo,recommendedVideos} = require("../controller/video");
 const { postVideoComment,postVideoSubComment,fetchVideoComment,fetchVideoSubComment,postVideoCommentReaction,fetchVideoCommentReaction} = require("../controller/videocomment");
 const userAuthCheck = require("../middleware/auth");
 router.route("/getVideo").post(fetchVideo);
@@ -21,6 +21,7 @@ router.route("/fetchGroupVideoRating").post(fetchGroupVideoRating)
 router.route("/videoView").post(videoView)
 router.route("/trendingViews").post(trendingViews)
 router.route("/believers").post(userAuthCheck,believersVideo)
+router.route("/recommendedVideos").post(recommendedVideos)
 
 
 module.exports = router;

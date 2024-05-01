@@ -103,7 +103,7 @@ const file = req.files.file;
     if (!file) {
         return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null});
     }else if (file.size>(5*1024*1024)){
-      return res.status(400).send({statusCode:1, message:'Maximum allowed size is 5MB',data:null});
+      return res.status(400).send({statusCode:1, message:'Maximum allowed size is 20MB',data:null});
     }
     const blobName = file.name;
     const stream = file.data;
