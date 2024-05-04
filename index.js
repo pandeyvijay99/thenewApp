@@ -9,11 +9,13 @@ app.use(fileupload());
 const authRouter = require("./src/routes/auth");
 const blipRouter = require("./src/routes/blip");
 const videoRouter = require("./src/routes/video");
+const photoRouter = require("./src/routes/photo");
 app.use(cors());
 app.use(express.json());
 app.use("/api", authRouter);
 app.use("/api",blipRouter)
 app.use("/video/api",videoRouter)
+app.use("/photo/api",photoRouter)
 //Port and Connect to DB
 const port = process.env.PORT || 10000;
 const start = async () => {

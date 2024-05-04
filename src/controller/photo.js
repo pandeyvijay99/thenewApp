@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
-const Blip = require("../models/blip");
-const Comment = require("../models/comment");
-const SubComment = require("../models/subcomment");
+const Photo = require("../models/photo");
+const PhotoComment = require("../models/photocomment");
+// const PotoSubComment = require("../models/photosubcomment");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const shortid = require("shortid");
@@ -17,7 +17,7 @@ require("dotenv").config();
 
 //Fetch User Details 
 
-const fetchBlip = async (req, res) => {
+const fetchPhoto = async (req, res) => {
     // console.log("validation ")
   try {
     debugger;
@@ -28,8 +28,8 @@ const fetchBlip = async (req, res) => {
         });
      }
  
-    //  const data = await Blip.find({ mobileNumber: req.body.mobileNumber });
-    const result = await   Blip.aggregate([
+    //  const data = await Photo.find({ mobileNumber: req.body.mobileNumber });
+    const result = await   Photo.aggregate([
         {
             $match:{
                 mobileNumber:req.body.mobileNumber
@@ -68,7 +68,7 @@ const fetchBlip = async (req, res) => {
  
  } else {
   return res.status(StatusCodes.OK).json({statusCode:1,
-      message: "Blip does not exist..!",
+      message: "Photo does not exist..!",
       data:null
   });
  }
@@ -81,67 +81,11 @@ const fetchBlip = async (req, res) => {
  //upload Profile Pic 
 
 
-const uploadProfilePic = async (req, res) => {
-  const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-const accountName = process.env.ACCOUNT_NAME;
-const accountKey = process.env.KEY_DATA;
-const containerName = process.env.PROFILE_CONTAINER;
-const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
-const blobServiceClient = new BlobServiceClient(
-    `https://${accountName}.blob.core.windows.net`,
-    sharedKeyCredential
-);
-const containerClient = blobServiceClient.getContainerClient(containerName);
-const file = req.files.file;
-// const upload = multer({ 
-//   storage: storage,
-//   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-// });
 
 
-    if (!file) {
-        return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null});
-    }else if (file.size>(5*1024*1024)){
-      return res.status(400).send({statusCode:1, message:'Maximum allowed size is 20MB',data:null});
-    }
-    const blobName = file.name;
-    const stream = file.data;
+ //upload Photo  File
 
-    // Upload file to Azure Blob Storage
-    let mobileNumber = ""
-    debugger
-    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
-    if(authHeader){
-        const token =  authHeader.split(' ')[1];
-    if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null});
-    console.log("token" , token);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    mobileNumber = decoded.mobileNumber;
-    console.log("blipdecoded ",decoded.mobileNumber);
-    }
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-    try {
-        const uploadResponse = await blockBlobClient.upload(stream, stream.length);
-
-        console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
-        const fileUrl = blockBlobClient.url;
-        console.log("fileUrl",fileUrl)
-        debugger;
-        const user = await User.findOneAndUpdate({ mobileNumber: mobileNumber },{ $set: { profilePicture: fileUrl } });
-        console.log("user ",user)
-    // console.log("user details ",user)
-        return res.status(200).send({statusCode:0,message:'',data:{profilePicture:fileUrl}});
-    } catch (error) {
-        console.error("Error uploading to Azure Blob Storage:", error);
-        return res.status(500).send({statusCode:1,message:'Error uploading file to Azure Blob Storage.',data:null});
-    }
-
-}
-
- //upload Blip  File
-
-const uploadBlipFile = async (req, res) => {
+const uploadPhotoFile = async (req, res) => {
     const authHeader = (req.headers.authorization)?req.headers.authorization:null;
     let mobileNumber = ""
     debugger
@@ -151,34 +95,31 @@ const uploadBlipFile = async (req, res) => {
     console.log("token" , token);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     mobileNumber = decoded.mobileNumber;
-    blip_user_id = decoded._id
-    console.log("blipdecoded ",decoded.mobileNumber);
+    photo_user_id = decoded._id
+    console.log("photodecoded ",decoded.mobileNumber);
     }
     
+    const file = req.files.file;
+    console.log("file length ",file.length)
     
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const accountName = process.env.ACCOUNT_NAME;
 const accountKey = process.env.KEY_DATA;
-const containerName = process.env.BLIP_CONTAINER;
+const containerName = process.env.PHOTO_CONTAINER;
 const sharedKeyCredential = new StorageSharedKeyCredential(accountName, accountKey);
 const blobServiceClient = new BlobServiceClient(
     `https://${accountName}.blob.core.windows.net`,
     sharedKeyCredential
 );
 const containerClient = blobServiceClient.getContainerClient(containerName);
-const file = req.files.file;
-// const upload = multer({ 
-//   storage: storage,
-//   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-// });
-
 
     if (!file) {
         return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null});
     }else if (file.size>(20*1024*1024)){
       return res.status(400).send({statusCode:1, message:'Maximum allowed size is 5MB',data:null});
     }
+    
     const blobName = file.name;
     const stream = file.data;
 
@@ -194,16 +135,16 @@ const file = req.files.file;
         let description = req.body.captions? req.body.captions:"";
         let hashtag = req.body.hashtags? (req.body.hashtags).split(","):"";
         let tags = req.body.peoples?(req.body.peoples).split(","):"";
-        const blipData ={
-            blipUrl:fileUrl,
+        const photoData ={
+            photoUrl:fileUrl,
             description:description,
             hashtag:hashtag,
             tags:tags,
             mobileNumber:mobileNumber,
-            blip_user_id : blip_user_id
+            photo_user_id : photo_user_id
         }
 
-        Blip.create(blipData).then((data, err) => {
+        Photo.create(photoData).then((data, err) => {
             if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
             });
         console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
@@ -216,7 +157,7 @@ const file = req.files.file;
 
 }
 
-const fetchAllBlip = async (req, res) => {
+const fetchAllPhoto = async (req, res) => {
     // console.log("validation ")
   try {
     debugger;
@@ -239,7 +180,7 @@ const fetchAllBlip = async (req, res) => {
                 const ObjectId = require('mongoose').Types.ObjectId
                 const user_ids = await User.find({_id:new ObjectId(user_id)},{believer:1})
                 console.log("user_ids ",user_ids[0].believer);
-                condition = { blip_user_id :{
+                condition = { photo_user_id :{
                   $in :user_ids[0].believer
                 }}
                 console.log("condition",condition)
@@ -249,7 +190,7 @@ const fetchAllBlip = async (req, res) => {
 
               }
                 debugger
-                const result = await   Blip.aggregate([ 
+                const result = await   Photo.aggregate([ 
                   {
                     $match :condition
                   },
@@ -264,7 +205,7 @@ const fetchAllBlip = async (req, res) => {
                   {
                     $project: {
                       _id: 1,
-                      blipUrl: 1,
+                      photoUrl: 1,
                       tags: 1,
                       hashtag:1,
                       comments:1,
@@ -272,15 +213,15 @@ const fetchAllBlip = async (req, res) => {
                       views:1,
                       ratingCount:  {
                         $cond: {
-                          if: { $isArray: "$blipRating" }, // Check if reactions field is an array
-                          then: { $size: "$blipRating" },   // If reactions is an array, return its size
+                          if: { $isArray: "$photoRating" }, // Check if reactions field is an array
+                          then: { $size: "$photoRating" },   // If reactions is an array, return its size
                           else: 0                           // If reactions is not an array or doesn't exist, return 0
                         }
                       },
                       reactionCount: {
                         $cond: {
-                          if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
-                          then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+                          if: { $isArray: "$photoReaction" }, // Check if reactions field is an array
+                          then: { $size: "$photoReaction" },   // If reactions is an array, return its size
                           else: 0                           // If reactions is not an array or doesn't exist, return 0
                         }
                       },
@@ -298,13 +239,13 @@ const fetchAllBlip = async (req, res) => {
                   }
                  ]);
                  debugger;
-                 const totalComment = await Comment.aggregate([
+                 const totalComment = await PhotoComment.aggregate([
                   {
                     $match :condition
                   },
                     {
                       $group: {
-                        _id: '$blip_id',
+                        _id: '$photo_id',
                         count: { $sum: 1 } // this means that the count will increment by 1
                       }
                     }
@@ -317,14 +258,14 @@ const fetchAllBlip = async (req, res) => {
              
              } else {
               return res.status(StatusCodes.OK).json({statusCode:1,
-                  message: "Blip does not exist..!",
+                  message: "Photo does not exist..!",
                   data:null
               });
              }
         }
     
     else{
-    const result = await   Blip.aggregate([ 
+    const result = await   Photo.aggregate([ 
       {
         $lookup: {
           from: "users", // name of the comment collection
@@ -336,7 +277,7 @@ const fetchAllBlip = async (req, res) => {
       {
         $project: {
           _id: 1,
-          blipUrl: 1,
+          photoUrl: 1,
           tags: 1,
           hashtag:1,
           comments:1,
@@ -344,15 +285,15 @@ const fetchAllBlip = async (req, res) => {
           views:1,
           ratingCount:  {
             $cond: {
-              if: { $isArray: "$blipRating" }, // Check if reactions field is an array
-              then: { $size: "$blipRating" },   // If reactions is an array, return its size
+              if: { $isArray: "$photoRating" }, // Check if reactions field is an array
+              then: { $size: "$photoRating" },   // If reactions is an array, return its size
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
           reactionCount: {
             $cond: {
-              if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
-              then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+              if: { $isArray: "$photoReaction" }, // Check if reactions field is an array
+              then: { $size: "$photoReaction" },   // If reactions is an array, return its size
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
@@ -369,10 +310,10 @@ const fetchAllBlip = async (req, res) => {
       }
      ]);
      debugger;
-     const totalComment = await Comment.aggregate([
+     const totalComment = await PhotoComment.aggregate([
         {
           $group: {
-            _id: '$blip_id',
+            _id: '$photo_id',
             count: { $sum: 1 } // this means that the count will increment by 1
           }
         }
@@ -385,7 +326,7 @@ const fetchAllBlip = async (req, res) => {
  
  } else {
   return res.status(StatusCodes.OK).json({statusCode:1,
-      message: "Blip does not exist..!",
+      message: "Photo does not exist..!",
       data:null
   });
  }
@@ -417,9 +358,9 @@ const fetchAllBlip = async (req, res) => {
            message: "reaction is required",
         });
      }
-     if (!req.body.blip_id || !req.body.blip_id) {
+     if (!req.body.photo_id || !req.body.photo_id) {
         return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "blip_id is required",
+           message: "photo_id is required",
         });
      }
      /*code for getting user_id from  header*/
@@ -430,7 +371,7 @@ const fetchAllBlip = async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
                 user_id = decoded._id;
-                console.log("blipdecoded ",decoded._id);
+                console.log("photodecoded ",decoded._id);
         }
         /*reactions */
         
@@ -438,16 +379,16 @@ const fetchAllBlip = async (req, res) => {
         const ObjectId = require('mongoose').Types.ObjectId
         user_id = new ObjectId(user_id)
         console.log("user_id ", user_id)
-        const blipReaction ={
+        const photoReaction ={
             reaction_user_id:user_id,
             reaction:req.body.reaction,
             reactionValue:reactionValue
         }
         debugger;
         // const ObjectId = require('mongoose').Types.ObjectId
-        const filter = { _id: new ObjectId( req.body.blip_id) };
+        const filter = { _id: new ObjectId( req.body.photo_id) };
         console.log("filer is ",filter);
-        const result = await Blip.findOneAndUpdate(filter, {$push:{blipReaction:blipReaction}}, {
+        const result = await Photo.findOneAndUpdate(filter, {$push:{photoReaction:photoReaction}}, {
           returnOriginal: false
         });
         return res.status(StatusCodes.OK).json({statusCode:0,
@@ -469,13 +410,13 @@ const fetchAllBlip = async (req, res) => {
     debugger;
     console.log("inside validation ")
      if (!req.body.rating || !req.body.rating) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "reaction is required",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "reaction is required",data:null
         });
      }
-     if (!req.body.blip_id || !req.body.blip_id) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "blip_id is required",
+     if (!req.body.photo_id || !req.body.photo_id) {
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "photo_id is required",data:null
         });
      }
      /*code for getting user_id from  header*/
@@ -486,20 +427,20 @@ const fetchAllBlip = async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
                 user_id = decoded._id;
-                console.log("blipdecoded ",decoded._id);
+                console.log("photodecoded ",decoded._id);
         }
         const ObjectId = require('mongoose').Types.ObjectId
         user_id = new ObjectId(user_id)
         console.log("user_id ", user_id)
-        const blipRating ={
+        const photoRating ={
           rating_user_id:user_id,
             ratingno:req.body.rating
         }
         debugger;
         // const ObjectId = require('mongoose').Types.ObjectId
-        const filter = { _id: new ObjectId( req.body.blip_id) };
+        const filter = { _id: new ObjectId( req.body.photo_id) };
         console.log("filer is ",filter);
-        const result = await Blip.findOneAndUpdate(filter, {$push:{blipRating:blipRating}}, {
+        const result = await Photo.findOneAndUpdate(filter, {$push:{photoRating:photoRating}}, {
           returnOriginal: false
         });
         return res.status(StatusCodes.OK).json({statusCode:0,
@@ -519,22 +460,22 @@ const fetchAllBlip = async (req, res) => {
     debugger;
     console.log("inside count ")
      
-     if (!req.body.blip_id || !req.body.blip_id) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "blip_id is required",
+     if (!req.body.photo_id || !req.body.photo_id) {
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "photo_id is required",data:null
         });
      }
      
         debugger;
          const ObjectId = require('mongoose').Types.ObjectId
    
-    result = await Blip.aggregate([
+    result = await Photo.aggregate([
         {
-          $match: { _id: new ObjectId(req.body.blip_id) } // Match the parent document with the given ID
+          $match: { _id: new ObjectId(req.body.photo_id) } // Match the parent document with the given ID
         },
         {
           $project: {
-            totalReaction: { $size: '$blipReaction' } // Project a field with the size of the subdocuments array
+            totalReaction: { $size: '$photoReaction' } // Project a field with the size of the subdocuments array
           }
         }
       ]);
@@ -543,14 +484,14 @@ const fetchAllBlip = async (req, res) => {
         const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
         const offset = (pageNumber - 1) * pageSize; // Calculate offset
    
-    grp = await Blip.aggregate([
+    grp = await Photo.aggregate([
         {
-          $unwind: '$blipReaction' // Unwind the subdocuments array
+          $unwind: '$photoReaction' // Unwind the subdocuments array
         },
         {
           $lookup: {
               from: "users", // name of the comment collection
-              localField: "blipReaction.reaction_user_id",
+              localField: "photoReaction.reaction_user_id",
               foreignField: "_id",
               as: "user_details"
         }
@@ -561,12 +502,12 @@ const fetchAllBlip = async (req, res) => {
         {
           $project: {
               // project fields as needed
-              "blipReaction.reaction": 1,
-              "blipReaction.updatedAt":1,
+              "photoReaction.reaction": 1,
+              "photoReaction.updatedAt":1,
               "user_details.webName": 1,
               "user_details.fullName": 1,
               "user_details.profilePicture": 1,// Include other user details you may need
-              "blipReaction.reactionValue":1
+              "photoReaction.reactionValue":1
           }
       },
       {
@@ -576,8 +517,8 @@ const fetchAllBlip = async (req, res) => {
         $limit: pageSize
       }
       ])
-      console.log("blip count reactionwise ",grp)
-        return res.status(StatusCodes.OK).json({statusCode:0,
+      console.log("photo count reactionwise ",grp)
+       return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { result ,grp},
       });
@@ -594,9 +535,9 @@ const fetchAllBlip = async (req, res) => {
     debugger;
     console.log("inside count ")
      
-     if (!req.body.blip_id || !req.body.blip_id) {
-        return res.status(StatusCodes.BAD_REQUEST).json({
-           message: "blip_id is required",
+     if (!req.body.photo_id || !req.body.photo_id) {
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "photo_id is required",data:null
         });
      }
      
@@ -607,13 +548,13 @@ const fetchAllBlip = async (req, res) => {
     //      message:"",   
     //      data: { result },
     //   });
-    result = await Blip.aggregate([
+    result = await Photo.aggregate([
         {
-          $match: { _id: new ObjectId(req.body.blip_id) } // Match the parent document with the given ID
+          $match: { _id: new ObjectId(req.body.photo_id) } // Match the parent document with the given ID
         },
         {
           $project: {
-            totalRating: { $size: '$blipRating' } // Project a field with the size of the subdocuments array
+            totalRating: { $size: '$photoRating' } // Project a field with the size of the subdocuments array
           }
         }
       ]);
@@ -621,19 +562,19 @@ const fetchAllBlip = async (req, res) => {
         const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
         const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
         const offset = (pageNumber - 1) * pageSize; // Calculate offset
-      RatingCount = await Blip.aggregate([
+      RatingCount = await Photo.aggregate([
         {
             $match:{
-                _id : new ObjectId(req.body.blip_id)
+                _id : new ObjectId(req.body.photo_id)
             }
         },
         {
-          $unwind: '$blipRating' // Unwind the subdocuments array
+          $unwind: '$photoRating' // Unwind the subdocuments array
         },
         {
           $lookup: {
               from: "users", // name of the comment collection
-              localField: "blipRating.rating_user_id",
+              localField: "photoRating.rating_user_id",
               foreignField: "_id",
               as: "user_details"
         }
@@ -644,8 +585,8 @@ const fetchAllBlip = async (req, res) => {
         {
           $project: {
               // project fields as needed
-              "blipRating.ratingno": 1,
-              "blipRating.updatedAt":1,
+              "photoRating.ratingno": 1,
+              "photoRating.updatedAt":1,
               "user_details.webName": 1,
               "user_details.fullName": 1,
               "user_details.profilePicture": 1,// Include other user details you may need
@@ -658,7 +599,7 @@ const fetchAllBlip = async (req, res) => {
         $limit: pageSize
       }
       ])
-      console.log("blip count ratings ",RatingCount)
+      console.log("photo count ratings ",RatingCount)
         return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { result ,RatingCount},
@@ -677,9 +618,9 @@ try {
   debugger;
   console.log("inside count ")
    
-   if (!req.body.blip_id || !req.body.blip_id) {
+   if (!req.body.photo_id || !req.body.photo_id) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-         message: "blip_id is required",
+         message: "photo_id is required",
       });
    }
    
@@ -691,23 +632,23 @@ try {
       const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
       const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
       const offset = (pageNumber - 1) * pageSize; // Calculate offset
-    RatingCount = await Blip.aggregate([
+    RatingCount = await Photo.aggregate([
       {
           $match:{
-              _id : new ObjectId(req.body.blip_id)
+              _id : new ObjectId(req.body.photo_id)
           }
       },
       {
-        $unwind: '$blipRating' // Unwind the subdocuments array
+        $unwind: '$photoRating' // Unwind the subdocuments array
       },
       {
         $group: {
-          _id: '$blipRating.ratingno',
+          _id: '$photoRating.ratingno',
           count: { $sum: 1 } 
         },
       }
     ])
-    console.log("blip count ratings ",RatingCount)
+    console.log("photo count ratings ",RatingCount)
       return res.status(StatusCodes.OK).json({statusCode:0,
        message:"",   
        data:  RatingCount
@@ -718,16 +659,16 @@ try {
  return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
 }
 }; 
-/*Blip Views */
-const blipView = async (req, res) => {
+/*Photo Views */
+const photoView = async (req, res) => {
   // console.log("validation ")
 try {
   debugger;
   console.log("inside count ")
    
-   if (!req.body.blip_id || !req.body.blip_id) {
+   if (!req.body.photo_id || !req.body.photo_id) {
       return res.status(StatusCodes.BAD_REQUEST).json({
-         message: "blip_id is required",
+         message: "photo_id is required",
       });
    }
    
@@ -735,7 +676,7 @@ try {
        const ObjectId = require('mongoose').Types.ObjectId
 
 
-       const conditions = {  _id: new ObjectId(req.body.blip_id) };
+       const conditions = {  _id: new ObjectId(req.body.photo_id) };
 
 // Define the update operation
 const update = { $inc: { views: 1 } }; // $inc is used to increment a value
@@ -744,9 +685,9 @@ const update = { $inc: { views: 1 } }; // $inc is used to increment a value
 const options = {
   new: true, // return the modified document rather than the original
 };
-viewCount = await Blip.findOneAndUpdate(conditions, update, options);
-    // viewCount = await Blip.findOneAndUpdate({ _id: new ObjectId(req.body.blip_id) },{ $inc: { views: 1 } }, {new: true });
-    console.log("blip views ",viewCount)
+viewCount = await Photo.findOneAndUpdate(conditions, update, options);
+    // viewCount = await Photo.findOneAndUpdate({ _id: new ObjectId(req.body.photo_id) },{ $inc: { views: 1 } }, {new: true });
+    console.log("photo views ",viewCount)
       return res.status(StatusCodes.OK).json({statusCode:0,
        message:"",   
        data:  viewCount
@@ -758,7 +699,7 @@ viewCount = await Blip.findOneAndUpdate(conditions, update, options);
 }
 }; 
 
-/*Trending Blip  */
+/*Trending Photo  */
 const trendingViews = async (req, res) => {
   const pipeline = [
     {
@@ -766,8 +707,8 @@ const trendingViews = async (req, res) => {
         views: 1,
         ratingCount:  {
           $cond: {
-            if: { $isArray: "$blipRating" }, // Check if reactions field is an array
-            then: { $size: "$blipRating" },   // If reactions is an array, return its size
+            if: { $isArray: "$photoRating" }, // Check if reactions field is an array
+            then: { $size: "$photoRating" },   // If reactions is an array, return its size
             else: 0                           // If reactions is not an array or doesn't exist, return 0
           }
         },// Calculate total ratings for each video
@@ -782,7 +723,7 @@ const trendingViews = async (req, res) => {
   ];
   debugger
   // Execute aggregation
-  Blip.aggregate(pipeline)
+  Photo.aggregate(pipeline)
     .then(results => {
       console.log('Results:', results);
       return res.status(StatusCodes.OK).json({statusCode:0,
@@ -800,8 +741,8 @@ const trendingViews = async (req, res) => {
     });
 }; 
 
-/*BelieversBlip Functionality*/
-const believersBlip = async (req, res) => {
+/*BelieversPhoto Functionality*/
+const believersPhoto = async (req, res) => {
   // console.log("validation ")
 
   try {
@@ -817,35 +758,31 @@ const believersBlip = async (req, res) => {
             user_id = decoded._id;
             console.log("user_id  ",decoded._id);
     }
+    const ObjectId = require('mongoose').Types.ObjectId
   const user_ids = User.find({_id:new ObjectId(user_id)},{believer:1})
   console.log("user_ids ",user_ids);
   // return;
-  //  const data = await Blip.find({});
-  const result = await   Blip.aggregate([
-
-
-   {
-
-   },
+  //  const data = await Photo.find({});
+  const result = await   Photo.aggregate([
     {
       $project: {
         _id: 1,
-        blipUrl: 1,
+        photoUrl: 1,
         tags: 1,
         hashtag:1,
         comments:1,
-        // ratingCount: { $size: '$blipRating' }, // Count of ratings sub-documents
+        // ratingCount: { $size: '$photoRating' }, // Count of ratings sub-documents
         ratingCount:  {
           $cond: {
-            if: { $isArray: "$blipRating" }, // Check if reactions field is an array
-            then: { $size: "$blipRating" },   // If reactions is an array, return its size
+            if: { $isArray: "$photoRating" }, // Check if reactions field is an array
+            then: { $size: "$photoRating" },   // If reactions is an array, return its size
             else: 0                           // If reactions is not an array or doesn't exist, return 0
           }
         },
         reactionCount: {
           $cond: {
-            if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
-            then: { $size: "$blipReaction" },   // If reactions is an array, return its size
+            if: { $isArray: "$photoReaction" }, // Check if reactions field is an array
+            then: { $size: "$photoReaction" },   // If reactions is an array, return its size
             else: 0                           // If reactions is not an array or doesn't exist, return 0
           }
         },
@@ -853,10 +790,10 @@ const believersBlip = async (req, res) => {
     }
    ]);
    debugger;
-   const totalComment = await Comment.aggregate([
+   const totalComment = await PhotoComment.aggregate([
       {
         $group: {
-          _id: '$blip_id',
+          _id: '$photo_id',
           count: { $sum: 1 } // this means that the count will increment by 1
         }
       }
@@ -870,7 +807,7 @@ const believersBlip = async (req, res) => {
 
 } else {
 return res.status(StatusCodes.OK).json({statusCode:1,
-    message: "Blip does not exist..!",
+    message: "Photo does not exist..!",
     data:null
 });
 }
@@ -880,6 +817,6 @@ return res.status(StatusCodes.OK).json({statusCode:1,
 }
 };
 /*End of the code*/
- module.exports = {fetchBlip,uploadProfilePic,uploadBlipFile ,fetchAllBlip,postReaction,
-            postRating,totalReaction,totalRating,fetchGroupRating,blipView,trendingViews
-          ,believersBlip};
+ module.exports = {fetchPhoto,uploadPhotoFile ,fetchAllPhoto,postReaction,
+            postRating,totalReaction,totalRating,fetchGroupRating,photoView,trendingViews
+          ,believersPhoto};

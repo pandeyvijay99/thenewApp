@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
-const Comment = require("../models/comment");
-const subcommentModel =  require("../models/subcomment")
+const PhotoComment = require("../models/photocomment");
+const photosubcommentModel =  require("../models/photosubcomment")
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { BlobServiceClient,StorageSharedKeyCredential } = require("@azure/storage-blob");
@@ -25,9 +25,9 @@ const postComment = async (req, res) => {
            message: "Coment is required",data:null
         });
      }
-     if (!req.body.blip_id || !req.body.blip_id) {
-        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-           message: "blip_id is required",data:null
+     if (!req.body.photo_id || !req.body.photo_id) {
+       return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "photo_id is required",data:null
         });
      }
      /*code for getting user_id from  header*/
@@ -38,18 +38,18 @@ const postComment = async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
                 user_id = decoded._id;
-                console.log("blipdecoded ",decoded._id);
+                console.log("photodecoded ",decoded._id);
         }
         const ObjectId = require('mongoose').Types.ObjectId
         user_id = new ObjectId(user_id)
         console.log("user_id ", user_id)
         const commentData ={
             user_id:user_id,
-            blip_id:req.body.blip_id,
+            photo_id:req.body.photo_id,
             comment:req.body.comment
         }
         debugger;
-        Comment.create(commentData).then((data, err) => {
+        PhotoComment.create(commentData).then((data, err) => {
             if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
             });
         console.log('comment data', commentData);
@@ -68,7 +68,7 @@ const postComment = async (req, res) => {
     debugger;
     console.log("inside validation ")
      if (!req.body.comment || !req.body.comment) {
-        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+       return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Coment is required",data:null
         });
      }
@@ -79,7 +79,7 @@ const postComment = async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
                 comment_user_id = decoded._id;
-                console.log("blipdecoded ",decoded._id);
+                console.log("photodecoded ",decoded._id);
         }
         const commentData =[{
             comment_user_id:comment_user_id,
@@ -96,7 +96,7 @@ const postComment = async (req, res) => {
         //   returnOriginal: false
         // });
 
-        subcommentModel.create(commentData).then((data, err) => {
+        photosubcommentModel.create(commentData).then((data, err) => {
           if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
           });
       console.log('comment data', commentData);
@@ -115,25 +115,25 @@ const postComment = async (req, res) => {
  };
 
 
- //upload Blip  File
+ //upload Photo  File
 
 
 
 const fetchComment = async (req, res) => {
     
   try {
-    if (!req.body.blip_id || !req.body.blip_id) {
+    if (!req.body.photo_id || !req.body.photo_id) {
         return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-           message: "Blip id is required",data:null
+           message: "Photo id is required",data:null
         });
      }
       debugger;
       let user_id="";
  
-const result = await   Comment.aggregate([
+const result = await   PhotoComment.aggregate([
    {
        $match:{
-         blip_id:req.body.blip_id
+         photo_id:req.body.photo_id
        } 
    },
 //    {
@@ -223,7 +223,7 @@ if(result.length>0){
   , offset = Math.max(0, req.body.offset)
    const ObjectId = require('mongoose').Types.ObjectId
    const filter = { parent_comment_id:  req.body.comment_id };
-  //  const result = await   Comment.aggregate([
+  //  const result = await   PhotComment.aggregate([
   //        {
   //            $match:{
   //              _id: new ObjectId( req.body.comment_id)
@@ -235,7 +235,7 @@ if(result.length>0){
   //        {
   //            $lookup: {
   //                from: "users", // name of the comment collection
-  //                localField: "subComment.comment_user_id",
+  //                localField: "photosubComment.comment_user_id",
   //                foreignField: "_id",
   //                as: "user_details"
   //            }
@@ -250,7 +250,7 @@ if(result.length>0){
   //       }
   //    ]);
   
-  const result = await   subcommentModel.aggregate([
+  const result = await   photosubcommentModel.aggregate([
     {
       $match :{
         parent_comment_id :req.body.comment_id
@@ -283,7 +283,7 @@ if(result.length>0){
               data:{result,totalCount:totalCount}
         });
       }else{
-          return res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
+         return res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
           data:null
       })
        }
@@ -321,7 +321,7 @@ try {
       });
    }
    if (!req.body.comment_id || !req.body.comment_id) {
-      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+     return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
          message: "comment_id is required",data:null
       });
    }
@@ -350,7 +350,7 @@ try {
       // const ObjectId = require('mongoose').Types.ObjectId
       const filter = { _id: new ObjectId( req.body.comment_id) };
       console.log("filer is ",filter);
-      const result = await Comment.findOneAndUpdate(filter, {$push:{commentReaction:commentReaction}}, {
+      const result = await PhotoComment.findOneAndUpdate(filter, {$push:{commentReaction:commentReaction}}, {
         returnOriginal: false
       });
       return res.status(StatusCodes.OK).json({statusCode:0,
@@ -372,7 +372,7 @@ const fetchCommentReaction = async (req, res) => {
     console.log("inside count ")
      
      if (!req.body.comment_id || !req.body.comment_id) {
-        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+       return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "comment_id is required",data:null
         });
      }
@@ -380,7 +380,7 @@ const fetchCommentReaction = async (req, res) => {
         debugger;
          const ObjectId = require('mongoose').Types.ObjectId
    
-    result = await Comment.aggregate([
+    result = await PhotoComment.aggregate([
         {
           $match: { _id: new ObjectId(req.body.comment_id) } // Match the parent document with the given ID
         },
@@ -395,7 +395,7 @@ const fetchCommentReaction = async (req, res) => {
         const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
         const offset = (pageNumber - 1) * pageSize; // Calculate offset
    
-    grp = await Comment.aggregate([
+    grp = await PhotoComment.aggregate([
         {
           $unwind: '$commentReaction' // Unwind the subdocuments array
         },
@@ -428,7 +428,7 @@ const fetchCommentReaction = async (req, res) => {
         $limit: pageSize
       }
       ])
-      console.log("blip count reactionwise ",grp)
+      console.log("photo count reactionwise ",grp)
         return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { result ,grp},

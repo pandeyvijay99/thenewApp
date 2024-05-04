@@ -21,13 +21,13 @@ const postVideoComment = async (req, res) => {
     debugger;
     console.log("inside validation ")
      if (!req.body.comment || !req.body.comment) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "Coment is required",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "Coment is required",data:null
         });
      }
      if (!req.body.video_id || !req.body.video_id) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "video_id is required",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "video_id is required",data:null
         });
      }
      /*code for getting user_id from  header*/
@@ -50,7 +50,7 @@ const postVideoComment = async (req, res) => {
         }
         debugger;
         VideoComment.create(videocommentData).then((data, err) => {
-            if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+            if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
             });
         console.log('comment data', videocommentData);
         
@@ -58,7 +58,7 @@ const postVideoComment = async (req, res) => {
  
  } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+   return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
  };
 
@@ -68,8 +68,8 @@ const postVideoComment = async (req, res) => {
     debugger;
     console.log("inside validation ")
      if (!req.body.comment || !req.body.comment) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "Coment is required",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "Coment is required",data:null
         });
      }
         const authHeader = (req.headers.authorization)?req.headers.authorization:null;
@@ -97,7 +97,7 @@ const postVideoComment = async (req, res) => {
         // });
 
         videosubcommentModel.create(videocommentData).then((data, err) => {
-          if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+          if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
           });
       console.log('comment data', videocommentData);
       
@@ -110,7 +110,7 @@ const postVideoComment = async (req, res) => {
  
  } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+   return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
  };
 
@@ -123,7 +123,7 @@ const fetchVideoComment = async (req, res) => {
     
   try {
     if (!req.body.video_id || !req.body.video_id) {
-        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+       return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Video id is required",data:null
         });
      }
@@ -184,16 +184,16 @@ if(result.length>0){
    let totalCount = result.length;
      if (result) {
         //    console.log("user ", data);
-        res.status(StatusCodes.OK).json({statusCode:0,message:"",
+        return res.status(StatusCodes.OK).json({statusCode:0,message:"",
         data:{result,totalCount:totalCount}
   });
 }else{
-    res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
+    return res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
     data:null
 })
  }
  } else {
-  res.status(StatusCodes.OK).json({statusCode:1,
+  return res.status(StatusCodes.OK).json({statusCode:1,
       message: "Comment does not exist..!",
       data:null
   });
@@ -206,7 +206,7 @@ if(result.length>0){
 
  } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+   return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
  };
 
@@ -214,7 +214,7 @@ if(result.length>0){
     
     try {
       if (!req.body.comment_id) {
-          res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+          return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
              message: "Comment  id is required",data:null
           });
        }
@@ -279,23 +279,23 @@ if(result.length>0){
          let totalCount = result.length;
         
            if (result) {
-              res.status(StatusCodes.OK).json({statusCode:0,message:"",
+              return res.status(StatusCodes.OK).json({statusCode:0,message:"",
               data:{result,totalCount:totalCount}
         });
       }else{
-          res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
+          return res.status(StatusCodes.OK).json({statusCode:1,message:"something went wrong",
           data:null
       })
        }
        } else {
-        res.status(StatusCodes.OK).json({statusCode:1,
+        return res.status(StatusCodes.OK).json({statusCode:1,
             message: "Comment does not exist..!",
             data:null
         });
        }
    } catch (error) {
       console.log("catch ", error );
-     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
     }
    };
 
@@ -316,13 +316,13 @@ try {
   debugger;
   console.log("inside validation ")
    if (!req.body.reaction || !req.body.reaction) {
-      res.status(StatusCodes.BAD_REQUEST).json({
-         message: "reaction is required",
+      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+         message: "reaction is required",data:null
       });
    }
    if (!req.body.comment_id || !req.body.comment_id) {
-      res.status(StatusCodes.BAD_REQUEST).json({
-         message: "comment_id is required",
+      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+         message: "comment_id is required",data:null
       });
    }
    /*code for getting user_id from  header*/
@@ -353,14 +353,14 @@ try {
       const result = await Comment.findOneAndUpdate(filter, {$push:{commentReaction:videocommentReaction}}, {
         returnOriginal: false
       });
-      res.status(StatusCodes.OK).json({statusCode:0,
+      return res.status(StatusCodes.OK).json({statusCode:0,
        message:"",   
        data: { result },
     });
 
 } catch (error) {
   console.log("catch ", error );
- res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+ return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
 }
 };
 /*End of code*/
@@ -372,8 +372,8 @@ const fetchVideoCommentReaction = async (req, res) => {
     console.log("inside count ")
      
      if (!req.body.comment_id || !req.body.comment_id) {
-        res.status(StatusCodes.BAD_REQUEST).json({
-           message: "comment_id is required",
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+           message: "comment_id is required",data:null
         });
      }
      
@@ -429,14 +429,14 @@ const fetchVideoCommentReaction = async (req, res) => {
       }
       ])
       console.log("video count reactionwise ",grp)
-        res.status(StatusCodes.OK).json({statusCode:0,
+        return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { result ,grp},
       });
  
  } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+   return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
   }
  }; 
 

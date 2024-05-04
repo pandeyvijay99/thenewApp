@@ -36,7 +36,7 @@ const userData = req.body;
      });
   } else {
      User.create(userData).then((user, err) => {
-     if (err) res.status(StatusCodes.OK).json({ statusCode:1,message:err,data:null });
+     if (err) return res.status(StatusCodes.OK).json({ statusCode:1,message:err,data:null });
      else{
       // console.log("data is ", user);
       /*Insert webName */
@@ -48,7 +48,7 @@ const userData = req.body;
       //     returnOriginal: false
       //   });
       Webname.create(update).then((data, err) => {
-         if (err) res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
+         if (err) return res.status(StatusCodes.OK).json({statusCode:1,message: err,data:null });
          // else
          //   res
          //    .status(StatusCodes.OK)
@@ -70,7 +70,7 @@ const signIn = async (req, res) => {
   try {
     console.log("inside validation ")
      if (!req.body.countryCode || !req.body.mobileNumber) {
-        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Please Enter Valid Number with country Code",data:null
         });
      }
@@ -86,7 +86,7 @@ const signIn = async (req, res) => {
 
         // refreshTokens.push(refreshToken);
 
-        res.status(StatusCodes.OK).json({
+        return res.status(StatusCodes.OK).json({
          statusCode:0,
          message:"",
             
@@ -97,13 +97,13 @@ const signIn = async (req, res) => {
   });
  
 } else {
-  res.status(StatusCodes.OK).json({statusCode:1,
+  return res.status(StatusCodes.OK).json({statusCode:1,
       message: "User does not exist..!",data:null
   });
 }
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.BAD_REQUEST).json({statusCode:1, message:error,data:null });
+   return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1, message:error,data:null });
   }
 };
 //update the existing document with new details
@@ -113,7 +113,7 @@ const webNameCheck = async (req, res) => {
 
       console.log("inside  webName validation ",req.body);
       if (!req.body.webName ) {
-        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Please Enter Valid WebName",data:null
         });
      }
@@ -153,7 +153,7 @@ const webNameCheck = async (req, res) => {
      
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.BAD_REQUEST).json({ statusCode:1,message: error,data:null });
+   return res.status(StatusCodes.BAD_REQUEST).json({ statusCode:1,message: error,data:null });
   }
 };
 
@@ -164,7 +164,7 @@ const updateUserDetails = async (req, res) => {
 
     console.log("userUpdation ",req.body);
      if (((req.body.fullName)&& !req.body.fullName) || ((req.body.description)&&!req.body.description)) {
-        res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
            message: "Please Enter Valid Input",data:null
         });
      }
@@ -180,14 +180,14 @@ const updateUserDetails = async (req, res) => {
         const doc = await User.findOneAndUpdate(filter, {$set:req.body}, {
           returnOriginal: false
         });
-        res.status(StatusCodes.OK).json({statusCode:0,
+        return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { doc },
       });
      }  
 } catch (error) {
     console.log("catch ", error );
-   res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
+   return res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
   }
 };
 
@@ -203,7 +203,7 @@ const getUserDetails = async (req, res) => {
    //     });
    //  }
     if (!req.body.userId ) {
-      res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
          message: "Please Provide Valid details ",data:null
       });
    }
@@ -212,12 +212,12 @@ const getUserDetails = async (req, res) => {
    // console.log("user details ",user)
     if (user) {
           console.log("user ", user);
-       res.status(StatusCodes.OK).json({statusCode:0,message:"",
+       return res.status(StatusCodes.OK).json({statusCode:0,message:"",
        data: { user}
  });
 
 } else {
- res.status(StatusCodes.BAD_REQUEST).json({
+ return res.status(StatusCodes.BAD_REQUEST).json({
    statusCode:1,
      message: "User does not exist..!",
      data:null
@@ -225,7 +225,7 @@ const getUserDetails = async (req, res) => {
 }
 } catch (error) {
    console.log("catch ", error );
-  res.status(StatusCodes.BAD_REQUEST).json({ error });
+  return res.status(StatusCodes.BAD_REQUEST).json({ error });
  }
 };
 //Code for searchWebName
@@ -235,7 +235,7 @@ const searchWebName = async (req, res) => {
 
    console.log("userUpdation ",req.body);
     if (!req.body.searchString) {
-       res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+       return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
           message: "Please Enter Valid Input",data:null
        });
     }
@@ -255,7 +255,7 @@ const searchWebName = async (req, res) => {
    }  
 } catch (error) {
    console.log("catch ", error );
-  res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
+  return res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
  }
 };
 
@@ -274,8 +274,8 @@ const believer = async (req, res) => {
             console.log("user id ",decoded._id);
     }
     if (!req.body.believers && (req.body.believers).length==0) {
-     res.status(StatusCodes.BAD_REQUEST).json({
-        message: "Provide atleast one believer",
+     return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+        message: "Provide atleast one believer",data:null
      });
   }
   const ObjectId = require('mongoose').Types.ObjectId
