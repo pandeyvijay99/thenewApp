@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { fetchPhoto, uploadProfilePic ,uploadPhotoFile,fetchAllPhoto,postReaction,postRating,totalReaction,totalRating,fetchGroupRating,photoView,trendingViews,believersPhoto} = require("../controller/photo");
+const { fetchPhoto ,uploadPhotoFile,fetchAllPhoto,postReaction,postRating,totalReaction,totalRating,fetchGroupRating,photoView,trendingViews,believersPhoto} = require("../controller/photo");
 const { postComment,postSubComment,fetchComment,fetchSubComment,postCommentReaction,fetchCommentReaction} = require("../controller/photocomment");
 const userAuthCheck = require("../middleware/auth");
 router.route("/getPhoto").post(fetchPhoto);
