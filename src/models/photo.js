@@ -11,9 +11,9 @@ const photoSchema = new mongoose.Schema({
       required: true
   },
   photoUrl: {
-     type: String,
+     type: Array,
      require: true,
-     index:true
+     "default":[]
   },
   tags: {
     type : Array ,
