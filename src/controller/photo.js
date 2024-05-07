@@ -99,8 +99,8 @@ const uploadPhotoFile = async (req, res) => {
     console.log("photodecoded ",decoded.mobileNumber);
     }
     
-    const file = req.files.file;
-    console.log("file length ",file.length)
+    const filedata = req.files.file;
+    console.log("file length ",filedata.length)
     
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -115,13 +115,13 @@ const blobServiceClient = new BlobServiceClient(
     
     const containerClient = blobServiceClient.getContainerClient(containerName);
 
-    if (!file) {
+    if (!filedata) {
         return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null});
-    }else if (file.size>(20*1024*1024)){
+    }else if (filedata.size>(20*1024*1024)){
       return res.status(400).send({statusCode:1, message:'Maximum allowed size is 5MB',data:null});
     }
     let blobURLs =[];
-    for (const files of file) { 
+    for (const files of filedata) { 
     const blobName = files.name;
     const stream = files.data;
       console.log("filename ",blobName)
