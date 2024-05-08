@@ -98,8 +98,11 @@ const uploadPhotoFile = async (req, res) => {
     photo_user_id = decoded._id
     console.log("photodecoded ",decoded.mobileNumber);
     }
-    
-    const filedata = req.files.file;
+    console.log("file data",req.files)
+    const filedata = req.files.file?req.files.file:"";
+    console.log("filedata ",filedata, filedata.length);
+    if(filedata.length==0  || filedata.length==undefined)
+      return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null}); 
     console.log("file length ",filedata.length)
     
 const storage = multer.memoryStorage();
