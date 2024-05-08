@@ -98,10 +98,13 @@ const uploadPhotoFile = async (req, res) => {
     photo_user_id = decoded._id
     console.log("photodecoded ",decoded.mobileNumber);
     }
-    console.log("file data",req.files)
-    const filedata = req.files.file?req.files.file:"";
-    console.log("filedata ",filedata, filedata.length);
-    if(filedata.length==0  || filedata.length==undefined)
+    console.log("file data",req.files.file)
+    debugger;
+    const filedata = (Array.isArray(req.files.file)?req.files.file:[req.files.file]).filter(e=>e);
+    console.log("myfile ",filedata.length)
+    // const filedata = req.files.file?req.files.file:"";
+    // console.log("filedata ", filedata[0].name,typeof(filedata));
+    if(filedata.length==0 )
       return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null}); 
     console.log("file length ",filedata.length)
     
