@@ -86,6 +86,9 @@ const fetchPhoto = async (req, res) => {
  //upload Photo  File
 
 const uploadPhotoFile = async (req, res) => {
+  console.log("body data",req.body);
+  // console.log("file data",(req.files)?req.files.file:"")
+  // return
     const authHeader = (req.headers.authorization)?req.headers.authorization:null;
     let mobileNumber = ""
     debugger
@@ -98,9 +101,12 @@ const uploadPhotoFile = async (req, res) => {
     photo_user_id = decoded._id
     console.log("photodecoded ",decoded.mobileNumber);
     }
-    console.log("file data",req.files.file)
+  
+    console.log("file data",req.files?req.files.file:"")
     debugger;
-    const filedata = (Array.isArray(req.files.file)?req.files.file:[req.files.file]).filter(e=>e);
+    let filedata ="";
+    if(req.files)
+      filedata = (Array.isArray(req.files.file)?req.files.file:[req.files.file]).filter(e=>e);
     console.log("myfile ",filedata.length)
     // const filedata = req.files.file?req.files.file:"";
     // console.log("filedata ", filedata[0].name,typeof(filedata));
