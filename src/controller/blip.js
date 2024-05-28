@@ -177,7 +177,7 @@ const file = req.files.file;
     if (!file) {
         return res.status(400).send({statusCode:1, message:'No file uploaded.',data:null});
     }else if (file.size>(20*1024*1024)){
-      return res.status(400).send({statusCode:1, message:'Maximum allowed size is 5MB',data:null});
+      return res.status(400).send({statusCode:1, message:'Maximum allowed size is 20MB',data:null});
     }
     const blobName = file.name;
     const stream = file.data;
@@ -191,9 +191,9 @@ const file = req.files.file;
         console.log("fileUrl",fileUrl)
         // const { countryCode, mobileNumber } = req.body;
         debugger;
-        let description = req.body.captions? req.body.captions:"";
-        let hashtag = req.body.hashtags? (req.body.hashtags).split(","):"";
-        let tags = req.body.peoples?(req.body.peoples).split(","):"";
+        let description = req.body.description? req.body.description:"";
+        let hashtag = req.body.hashtags? (req.body.hashtags).split(","):[];
+        let tags = req.body.peoples?(req.body.peoples).split(","):[];
         const blipData ={
             blipUrl:fileUrl,
             description:description,
@@ -268,6 +268,7 @@ const fetchAllBlip = async (req, res) => {
                       tags: 1,
                       hashtag:1,
                       comments:1,
+                      description:1,
                       user_details:1,
                       views:1,
                       ratingCount:  {
@@ -340,6 +341,7 @@ const fetchAllBlip = async (req, res) => {
           tags: 1,
           hashtag:1,
           comments:1,
+          description:1,
           user_details:1,
           views:1,
           ratingCount:  {
