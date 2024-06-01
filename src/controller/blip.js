@@ -507,68 +507,78 @@ const fetchAllBlip = async (req, res) => {
         }
         debugger;
         // const ObjectId = require('mongoose').Types.ObjectId
+
         const filter = { _id: new ObjectId( req.body.blip_id) };
-        console.log("filer is ",filter);
-        // const result = await Blip.findOneAndUpdate(filter, {$push:{blipRating:blipRating}}, {
-        //   returnOriginal: false
+        currentUserRating = await Blip.aggregate([
+          {
+            $unwind:"$blipRating"
+          },
+          { $match: {"$and":[{ $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(user_id)] } },{_id:new ObjectId(req.body.blip_id)} ]}},
+         
+          {
+            $project:{
+              "blipRating.ratingno":1
+            }
+          }
+          // { $set: { "blipRating[0].ratingno": req.body.rating }}
+          
+        ]);
+        // currentUserRating = await Blip.findOneAndUpdate({"$and":[{ $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(user_id)] } },{_id:new ObjectId(req.body.blip_id)} ]}, {$set:{"blipRating.ratingno":req.body.rating}}, {
+          //   returnOriginal: false
+          // });
+          // const result = await Blip.find({"$and":[{ $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(user_id)] } },{_id:new ObjectId(req.body.blip_id)} ]}, {}, {
+          // returnOriginal: false
         // });
-      //   return res.status(StatusCodes.OK).json({statusCode:0,
-      //    message:"",   
-      //    data: { result },
-      // });
+        // console.log("current_looged_in_user", result)
+        // if (currentUserRating && currentUserRating.ratingno){
 
-      // const postId = '...'; // The ID of the post to update
-      // const userId = mongoose.Types.ObjectId('...'); // The ID of the user rating the post
-      // const newRating = 4.5; // The new rating value
-      
-      // Step 1: Attempt to update the existing rating subdocument
-      Blip.findOneAndUpdate(
-        { 
-          _id: new ObjectId( req.body.blip_id), 
-          'blipRating.blip_user_id': current_user_id 
-        },
-        {
-          $set: { 'blipRating.$.ratingno': req.body.rating }
-        },
-        { new: true } // Return the modified document
-      )
-      .then(post => {
-        if (!post) {
-          // Step 2: If no post was found in the first query, it means the rating subdocument does not exist
-          // Insert a new rating subdocument
-          return Blip.findOneAndUpdate(
-            { _id: new ObjectId( req.body.blip_id) },
-            {
-              $push: {blipRating:blipRating} 
-            },
-            { new: true } // Return the modified document
-          );
-        }
-        return post;
-      })
-      .then(updatedPost => {
-          return res.status(StatusCodes.OK).json({statusCode:0,
-         message:"",   
-         data:"rating updated",
-      });
-      })
-      .catch(err => {
-        return res.status(StatusCodes.OK).json({statusCode:1,
-          message:err,   
-          data:"",
+        //   return res.status(StatusCodes.OK).json({statusCode:0,
+        //     message:"",   
+        //     data: { result },
+        //  });
+        // }else{
+        // return;
+        if(currentUserRating.length>0){
+        const filterData = {
+          "blipRating.rating_user_id":new ObjectId(user_id),
+          _id:new ObjectId(req.body.blip_id),
+          // 'comments.postedBy': 'Specific user',
+        };
+        const update = {
+          $set: {
+            'blipRating.$.ratingno': req.body.rating,
+          },
+        };
+        const options = { new: true };
+       
+        Blip.findOneAndUpdate(filterData, update, options)
+        .then(updatedPost => {
+          if (updatedPost) {
+            return res.status(StatusCodes.OK).json({statusCode:0,
+              message:"",   
+              data: {updatedPost  },
+           });
+          } else {
+           
+            return
+          }
+        })
+        .catch(error => {
+          console.error('Error updating post:', error);
+        });
+      }else{
+       
+        console.log("filer is ",filter);
+        const result = await Blip.findOneAndUpdate(filter, {$push:{blipRating:blipRating}}, {
+          returnOriginal: false
+        });
+        return res.status(StatusCodes.OK).json({statusCode:0,
+          message:"",   
+          data: {  },
        });
-      });
-      
+     }
+        
 
-
-
-
-
-
-
-
-
- 
  } catch (error) {
     console.log("catch ", error );
    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
@@ -664,11 +674,6 @@ const fetchAllBlip = async (req, res) => {
      
         debugger;
          const ObjectId = require('mongoose').Types.ObjectId
-        
-    //     res.status(StatusCodes.OK).json({statusCode:0,
-    //      message:"",   
-    //      data: { result },
-    //   });
     Ratings = await Blip.aggregate([
         {
           $match: { _id: new ObjectId(req.body.blip_id) } // Match the parent document with the given ID
@@ -682,30 +687,26 @@ const fetchAllBlip = async (req, res) => {
             count: { $sum: 1 }     // Count the number of movies in each group
           }
         },
-        // {
-        //   $project: {
-        //     // blipRating:1,
-        //     totalRating: { $size: '$blipRating' } // Project a field with the size of the subdocuments array
-        //   }
-        // }
       ]);
-
-
-      // currentUserRating = Ratings = await Blip.aggregate([
-      //   {
-      //     $unwind:"$blipRating"
-      //   },
-      //   {
-      //     $match: { 'blipRating.rating_user_id': user_id } // Filter to only include ratings by the specified user
-      //   },
-      //   {
-      //     $group: {
-      //       _id: "$blipRating.ratingno",        // Group by the 'rating' field
-      //       count: { $sum: 1 }     // Count the number of movies in each group
-      //     }
-      //   },
+      let currentUserRating="";
+      if(req.body.current_user_id){
+        // userID = new ObjectId(req.body.blip_user_id)
         
-      // ]); 
+      currentUserRating = Ratings = await Blip.aggregate([
+        {
+          $unwind:"$blipRating"
+        },
+        { $match: { $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(req.body.current_user_id)] } } },
+       
+        {
+          $project:{
+            "blipRating.ratingno":1
+          }
+        }
+        
+      ]); 
+    }
+      // console.log("loggedIn user",currentUserRating); return;
         console.log("result is ",Ratings);
         const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
         const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
@@ -750,7 +751,7 @@ const fetchAllBlip = async (req, res) => {
       console.log("blip count ratings ",RatingCount)
         return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
-         data: { Ratings ,RatingCount},
+         data: { Ratings ,RatingCount,currentUserRating},
       });
  
  } catch (error) {
