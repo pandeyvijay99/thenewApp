@@ -139,7 +139,7 @@ const result = await   Comment.aggregate([
 //    {
 //     $lookup: {
 //         from: "subcomments", // name of the comment collection
-//         localField: "comment_id",
+//         localField: "parent_comment_id",
 //         foreignField: "_id",
 //         as: "subcomment"
 //     }
@@ -157,6 +157,9 @@ const result = await   Comment.aggregate([
           _id: 1,
           comment:1,
           user_details: {$arrayElemAt:["$user_details",0]},
+          createdAt:1,
+          updatedAt:1,
+          subdocument:1,
           reactionCount: {
             $cond: {
               if: { $isArray: "$subcomment" }, // Check if reactions field is an array
