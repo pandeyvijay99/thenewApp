@@ -230,14 +230,14 @@ const fetchAllBlip = async (req, res) => {
             if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 console.log("token" , token);
-                user_id = decoded._id;
+               c_r_user =  user_id = decoded._id;
                 mobileNumber =decoded.mobileNumber?decoded.mobileNumber:null;
                 console.log("user_id ",decoded._id);
                 console.log("belie",req.body.isBelieverRequire)
                 const ObjectId = require('mongoose').Types.ObjectId
                 const user_ids = await User.find({_id:new ObjectId(user_id)},{believer:1})
               if( req.body.isBelieverRequire ==false)
-                condition = { mobileNumber:mobileNumber}
+                condition = { }
               else if (req.body.isBelieverRequire && req.body.isBelieverRequire ==true){
                 const ObjectId = require('mongoose').Types.ObjectId
                 const user_ids = await User.find({_id:new ObjectId(user_id)},{believer:1})
@@ -276,6 +276,7 @@ const fetchAllBlip = async (req, res) => {
                       user_details:1,
                       blip_user_id:1,
                       views:1,
+                      totalRating:1,
                       ratingCount:  {
                         $cond: {
                           if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -288,6 +289,13 @@ const fetchAllBlip = async (req, res) => {
                           if: { $isArray: "$blipReaction" }, // Check if reactions field is an array
                           then: { $size: "$blipReaction" },   // If reactions is an array, return its size
                           else: 0                           // If reactions is not an array or doesn't exist, return 0
+                        }
+                      },
+                      believerStatus:  {
+                        $cond: {
+                          if: {   '$in': ["$blip_user_id",user_ids[0].believer]  }, // Check if reactions field is an array
+                          then: true,   // If reactions is an array, return its size
+                          else: false                        // If reactions is not an array or doesn't exist, return 0
                         }
                       },
                       createdAt:1,
@@ -340,6 +348,9 @@ const fetchAllBlip = async (req, res) => {
           as: "user_details"
     }
       },
+      // {
+      //   $unwind:"$blipRating"
+      // },
       {
         $project: {
           _id: 1,
@@ -351,6 +362,7 @@ const fetchAllBlip = async (req, res) => {
           user_details:1,
           blip_user_id:1,
           views:1,
+          totalRating:1,
           ratingCount:  {
             $cond: {
               if: { $isArray: "$blipRating" }, // Check if reactions field is an array
@@ -365,6 +377,7 @@ const fetchAllBlip = async (req, res) => {
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
+        
           createdAt:1,
           updatedAt:1
         }
@@ -487,6 +500,7 @@ const fetchAllBlip = async (req, res) => {
            message: "blip_id is required",
         });
      }
+    
      /*code for getting user_id from  header*/
         const authHeader = (req.headers.authorization)?req.headers.authorization:null;
         if(authHeader){
@@ -509,6 +523,46 @@ const fetchAllBlip = async (req, res) => {
         // const ObjectId = require('mongoose').Types.ObjectId
 
         const filter = { _id: new ObjectId( req.body.blip_id) };
+         /*Code to update the total rating*/
+          // const tRating =0;
+          //   exisitingRating =await  Blip.find({ _id: new ObjectId( req.body.blip_id)},{totalRating:1})
+          //   console.log("exisitingRating",exisitingRating)
+          //   if(!exisitingRating.totalRating ){
+          //     Blip.findOneAndUpdate({_id: new ObjectId( req.body.blip_id)},{$set:{totalRating:req.body.rating}})
+          //   }else{
+          //     ratingSum = parseFloat(exisitingRating.totalRating + req.body.rating);
+          //     Blip.findOneAndUpdate({_id: new ObjectId( req.body.blip_id)},{$set:{totalRating:ratingSum}})
+          //   }
+
+    
+    // Save the updated product back to the database
+    
+    const product = await Blip.findById({_id:new ObjectId(req.body.blip_id)});
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    console.log("product ",product);
+    // Calculate the new total rating
+    const newTotalRating = (product.totalRating?parseFloat(product.totalRating):0) + parseFloat(req.body.rating);
+
+    // Update the total rating in the database
+    const updatedProduct = await Blip.findOneAndUpdate(
+      { _id: new ObjectId(req.body.blip_id) },
+      { $set: { totalRating: newTotalRating } },
+      { new: true } // Return the updated document
+    );
+
+
+
+
+
+
+
+
+
+     /*End of the code*/
+
         currentUserRating = await Blip.aggregate([
           {
             $unwind:"$blipRating"
@@ -520,25 +574,9 @@ const fetchAllBlip = async (req, res) => {
               "blipRating.ratingno":1
             }
           }
-          // { $set: { "blipRating[0].ratingno": req.body.rating }}
           
         ]);
-        // currentUserRating = await Blip.findOneAndUpdate({"$and":[{ $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(user_id)] } },{_id:new ObjectId(req.body.blip_id)} ]}, {$set:{"blipRating.ratingno":req.body.rating}}, {
-          //   returnOriginal: false
-          // });
-          // const result = await Blip.find({"$and":[{ $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(user_id)] } },{_id:new ObjectId(req.body.blip_id)} ]}, {}, {
-          // returnOriginal: false
-        // });
-        // console.log("current_looged_in_user", result)
-        // if (currentUserRating && currentUserRating.ratingno){
-
-        //   return res.status(StatusCodes.OK).json({statusCode:0,
-        //     message:"",   
-        //     data: { result },
-        //  });
-        // }else{
-        // return;
-        if(currentUserRating.length>0){
+                if(currentUserRating.length>0){
         const filterData = {
           "blipRating.rating_user_id":new ObjectId(user_id),
           _id:new ObjectId(req.body.blip_id),
@@ -568,7 +606,7 @@ const fetchAllBlip = async (req, res) => {
         });
       }else{
        
-        console.log("filer is ",filter);
+        // console.log("filer is ",filter);
         const result = await Blip.findOneAndUpdate(filter, {$push:{blipRating:blipRating}}, {
           returnOriginal: false
         });
@@ -610,7 +648,7 @@ const fetchAllBlip = async (req, res) => {
           }
         }
       ]);
-        console.log("result is ",result);
+        // console.log("result is ",result);
         const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
         const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
         const offset = (pageNumber - 1) * pageSize; // Calculate offset
@@ -648,7 +686,7 @@ const fetchAllBlip = async (req, res) => {
         $limit: pageSize
       }
       ])
-      console.log("blip count reactionwise ",grp)
+      // console.log("blip count reactionwise ",grp)
         return res.status(StatusCodes.OK).json({statusCode:0,
          message:"",   
          data: { result ,grp},
@@ -692,7 +730,7 @@ const fetchAllBlip = async (req, res) => {
       if(req.body.current_user_id){
         // userID = new ObjectId(req.body.blip_user_id)
         
-      currentUserRating = Ratings = await Blip.aggregate([
+      currentUserRating = await Blip.aggregate([
         {
           $unwind:"$blipRating"
         },
