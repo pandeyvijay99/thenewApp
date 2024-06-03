@@ -271,6 +271,8 @@ if(result.length>0){
                 $project: {
                     _id: 1,
                     comment: 1,
+                    createdAt:1,
+                    updatedAt:1,
                     user_details: {$arrayElemAt:["$user_details",0]},
                    
                 }

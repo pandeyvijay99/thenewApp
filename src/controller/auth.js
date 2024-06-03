@@ -279,8 +279,59 @@ const believer = async (req, res) => {
      });
   }
   const ObjectId = require('mongoose').Types.ObjectId
+//   const conditions = {  _id: new ObjectId(user_id) };
+//   const result = await User.updateMany(conditions,{ $addToSet: { believer: { $each: req.body.believers } } }, { multi: true })
+debugger
+const doc = await User.findById( new ObjectId(user_id));
+
+  if (!doc) {
+   return res.status(StatusCodes.OK).json({statusCode:1,
+      message: "no data found",data:""
+   });
+  }
+
+  const index = doc.believer.indexOf(req.body.believers);
+  if (index > -1) {
+    // User ID is in the believers array, remove it
+    doc.believer.splice(index, 1);
+  } else {
+    // User ID is not in the believers array, add it
+    console.log("believer",req.body.believers)
+   let believer = req.body.believers
+    doc.believer.push(...believer);
+  }
+
+  await doc.save();
+
+return res.status(StatusCodes.OK).json({statusCode:0,
+   message: "",data:"data saved"
+});
+  debugger
+   }catch(error){
+      return res.status(StatusCodes.OK).json({statusCode:1,
+         message: error,data:null
+      });
+   }
+ }; 
+ 
+/*Believers Blip  */
+const getBeleiver = async (req, res) => {
+
+   try{
+    /*code for getting user_id from  header*/
+    const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+    if(authHeader){
+        const token =  authHeader.split(' ')[1];
+        if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            console.log("token" , token);
+            user_id = decoded._id;
+            console.log("user id ",decoded._id);
+    }
+    const ObjectId = require('mongoose').Types.ObjectId
   const conditions = {  _id: new ObjectId(user_id) };
-  const result = await User.updateMany(conditions,{ $addToSet: { believer: { $each: req.body.believers } } }, { multi: true })
+   // const result = await User.find(conditions,{believer:1 })
+   const result = await User.find().populate('believer');
   return res.status(StatusCodes.OK).json({statusCode:0,
    message: "",data:result
 });
@@ -291,5 +342,5 @@ const believer = async (req, res) => {
       });
    }
  }; 
- 
-module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails,searchWebName,believer};
+
+module.exports = { signUp, signIn,webNameCheck,updateUserDetails,getUserDetails,searchWebName,believer,getBeleiver};
