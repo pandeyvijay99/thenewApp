@@ -136,14 +136,7 @@ const result = await   Comment.aggregate([
          blip_id:req.body.blip_id
        } 
    },
-//    {
-//     $lookup: {
-//         from: "subcomments", // name of the comment collection
-//         localField: "parent_comment_id",
-//         foreignField: "_id",
-//         as: "subcomment"
-//     }
-// },
+
    {
        $lookup: {
            from: "users", // name of the comment collection
@@ -152,6 +145,19 @@ const result = await   Comment.aggregate([
            as: "user_details"
        }
    },
+      {
+    $lookup: {
+        from: "subcomments", // name of the comment collection
+        localField: "parent_comment_id",
+        foreignField: "comment_id",
+        as: "subcomment"
+    }
+},
+// {
+//   $addFields: {
+//     subcomment: { $size: '$subcomment' }
+//   }
+// },
    {
       $project: {
           _id: 1,
@@ -169,11 +175,12 @@ const result = await   Comment.aggregate([
           },
           subdocument: {
             $cond: {
-              if: { $isArray: "$commentReaction" }, // Check if reactions field is an array
-              then: { $size: "$commentReaction" },   // If reactions is an array, return its size
+              if: { $isArray: "$subcomment" }, // Check if reactions field is an array
+              then: { $size: "$subcomment" },   // If reactions is an array, return its size
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
+          // subcomment:1
       },
       
   },

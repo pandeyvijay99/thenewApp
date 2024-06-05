@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
      trim: true,
      min: 3,
      max: 20,
+     ref: "mobileNumber",
   },
   webName: {
      type: String,

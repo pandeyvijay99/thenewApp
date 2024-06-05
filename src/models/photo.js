@@ -64,7 +64,7 @@ photoReaction:[{
  }],
  photoRating:[{
    ratingno:{
-      type:String,
+      type:Number,
       require: true
    },
    rating_user_id: {
@@ -85,6 +85,9 @@ believer: {
  },
  photo_user_id:{
    type : String
+ },
+ totalRating:{
+   type :Number
  }
 },
 
