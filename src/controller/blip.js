@@ -150,6 +150,7 @@ const uploadBlipFile = async (req, res) => {
   let file = ""
   if (req.files) {
     file = req.files.file;
+    blip_thumbnail = req.files.thumbnail;
   } else {
     return res.status(400).send({ statusCode: 1, message: 'Seems file is not', data: null });
   }
@@ -190,16 +191,28 @@ const uploadBlipFile = async (req, res) => {
   } else if (file.size > (20 * 1024 * 1024)) {
     return res.status(400).send({ statusCode: 1, message: 'Maximum allowed size is 20MB', data: null });
   }
-  const blobName = file.name;
-  const stream = file.data;
+   // const blobName = file.name;
+   const stream = file.data;
+   const thumbnail_stream =blip_thumbnail.data;
+   const originalFileName = path.basename(file.name);
+   const folderName = originalFileName; 
+   const originalBlobName = `${folderName}/${originalFileName}`;
+   const blockBlobClient = containerClient.getBlockBlobClient(originalBlobName);
 
-  // Upload file to Azure Blob Storage
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  try {
-    const uploadResponse = await blockBlobClient.upload(stream, stream.length);
-    const fileUrl = blockBlobClient.url;
-    debugger;
-    console.log("fileUrl", fileUrl)
+   /*thumbnail */
+   const originalThumbnailFileName = path.basename(blip_thumbnail.name);
+   const originalThumbnailBlobName = `${folderName}/${originalThumbnailFileName}`;
+   const blockThumbnailBlobClient = containerClient.getBlockBlobClient(originalThumbnailBlobName);
+
+   // Upload file to Azure Blob Storage
+   // const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+   try {
+       const uploadResponse = await blockBlobClient.upload(stream, stream.length);
+       const fileUrl = blockBlobClient.url;
+       const uploadThumbnailResponse = await blockThumbnailBlobClient.upload(thumbnail_stream, stream.length);
+       const thumbnailFileUrl = blockThumbnailBlobClient.url;
+       debugger;
+       console.log("fileUrl",fileUrl)
     // const { countryCode, mobileNumber } = req.body;
     debugger;
     let description = req.body.description ? req.body.description : "";
@@ -207,6 +220,7 @@ const uploadBlipFile = async (req, res) => {
     let tags = req.body.peoples ? (req.body.peoples).split(",") : [];
     const blipData = {
       blipUrl: fileUrl,
+      thumbnailBlipUrl:thumbnailFileUrl,
       description: description,
       hashtag: hashtag,
       tags: tags,
@@ -218,6 +232,7 @@ const uploadBlipFile = async (req, res) => {
       if (err) return res.status(StatusCodes.OK).json({ statusCode: 1, message: err, data: null });
     });
     console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
+    console.log('File uploaded successfully to Azure Blob Storage:', uploadThumbnailResponse);
 
     return res.status(200).send({ statusCode: 0, message: '', data: "File uploaded successfully." });
   } catch (error) {
@@ -281,6 +296,7 @@ const fetchAllBlip = async (req, res) => {
           $project: {
             _id: 1,
             blipUrl: 1,
+            thumbnailBlipUrl:1,
             tags: 1,
             hashtag: 1,
             comments: 1,
@@ -369,6 +385,7 @@ const fetchAllBlip = async (req, res) => {
           $project: {
             _id: 1,
             blipUrl: 1,
+            thumbnailBlipUrl:1,
             tags: 1,
             hashtag: 1,
             comments: 1,
@@ -745,8 +762,15 @@ const totalRating = async (req, res) => {
         {
           $unwind: "$blipRating"
         },
-        { $match: { $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(req.body.current_user_id)] } } },
-
+        // { $match: { $expr: { $eq: ["$blipRating.rating_user_id", new ObjectId(req.body.current_user_id)] } } },
+        {
+          $match: {
+            _id: new ObjectId(req.body.photo_id),
+            $expr: {
+              $eq: ["$blipRating.rating_user_id", new ObjectId(req.body.current_user_id)]
+            }
+          }
+    },
         {
           $project: {
             "blipRating.ratingno": 1
@@ -1016,7 +1040,7 @@ const believersBlip = async (req, res) => {
     } else {
       return res.status(StatusCodes.OK).json({
         statusCode: 1,
-        message: "Blip does not exist..!",
+        message: "Belivers  does not exist..!",
         data: null
       });
     }

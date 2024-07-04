@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { signUp, signIn ,webNameCheck,updateUserDetails,getUserDetails,searchWebName,believer} = require("../controller/auth");
+const { signUp, signIn ,webNameCheck,updateUserDetails,getUserDetails,searchWebName,believer,getBeleiver,checkMobileNumbers} = require("../controller/auth");
 const {  
   isRequestValidated,
   validateSignUpRequest,
@@ -18,5 +18,7 @@ router.route("/updateUserDetails").put(userAuthCheck,updateUserDetails);
 router.route("/getUserDetails").post(userAuthCheck,getUserDetails);
 router.route("/believers").post(userAuthCheck,believer)
 router.route('/searchWebName').post(searchWebName);
+router.route("/getBeleiver").post(userAuthCheck,getBeleiver)
+router.route('/checkMobileNumbers').post(checkMobileNumbers)
 
 module.exports = router;

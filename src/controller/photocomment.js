@@ -154,7 +154,7 @@ const result = await   PhotoComment.aggregate([
    },
    {
     $lookup: {
-        from: "subcomments", // name of the comment collection
+        from: "photosubcomments", // name of the comment collection
         localField: "parent_comment_id",
         foreignField: "comment_id",
         as: "subcomment"
@@ -167,13 +167,14 @@ const result = await   PhotoComment.aggregate([
           user_details: {$arrayElemAt:["$user_details",0]},
           createdAt:1,
           uddatedAt:1,
-          reactionCount: {
-            $cond: {
-              if: { $isArray: "$subcomment" }, // Check if reactions field is an array
-              then: { $size: "$subcomment" },   // If reactions is an array, return its size
-              else: 0                           // If reactions is not an array or doesn't exist, return 0
-            }
-          },
+          subcomment:1,
+          // reactionCount: {
+          //   $cond: {
+          //     if: { $isArray: "$subcomment" }, // Check if reactions field is an array
+          //     then: { $size: "$subcomment" },   // If reactions is an array, return its size
+          //     else: 0                           // If reactions is not an array or doesn't exist, return 0
+          //   }
+          // },
           subdocument: {
             $cond: {
               if: { $isArray: "$subcomment" }, // Check if reactions field is an array

@@ -171,6 +171,8 @@ const result = await   VideoComment.aggregate([
               else: 0                           // If reactions is not an array or doesn't exist, return 0
             }
           },
+          createdAt:1,
+          updatedAt:1
       },
       
   },
@@ -269,6 +271,8 @@ if(result.length>0){
                     _id: 1,
                     comment: 1,
                     user_details: {$arrayElemAt:["$user_details",0]},
+                    createdAt:1,
+                    updatedAt:1
                    
                 }
     }

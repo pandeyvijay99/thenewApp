@@ -206,11 +206,6 @@ const getUserDetails = async (req, res) => {
    // console.log("validation ")
    try {
       console.log("inside validation ")
-      //  if (!req.body.countryCode || !req.body.mobileNumber) {
-      //     res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-      //        message: "Please Enter Valid Number with country Code",data:null
-      //     });
-      //  }
       if (!req.body.userId) {
          return res.status(StatusCodes.BAD_REQUEST).json({
             statusCode: 1,
@@ -332,11 +327,75 @@ const believer = async (req, res) => {
    }
 };
 
-/*Believers Blip  */
-const getBeleiver = async (req, res) => {
+/*Believers List  */
+// const getBeleiver = async (req, res) => {
+// debugger
+//    try {
+//       /*code for getting user_id from  header*/
+//       const authHeader = (req.headers.authorization) ? req.headers.authorization : null;
+//       if (authHeader) {
+//          const token = authHeader.split(' ')[1];
+//          if (!token) return res.status(403).send({ statusCode: 1, message: "Access denied.", data: null });
+//          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//          console.log("token", token);
+//          user_id = decoded._id;
+//          console.log("user id ", decoded._id);
+//       }
+//       const currentUser = await User.findById(user_id).exec();
+//       console.log("current user",currentUser)
+//     if (!currentUser) {
+//       throw new Error('User not found');
+//     }
+//     const believerIds = currentUser.believer;
+//    //  const believersDetails = await User.find({ _id: { $in: believerIds } }).exec();
+//    const ObjectId = require('mongoose').Types.ObjectId
+//    const believersDetails = await User.aggregate([
+//       {
+//          $match :{ _id: {$in: believerIds.map(id => new ObjectId(id)) } }
+//        },
+//        {
+//          $lookup: {
+//            from: "chats", // name of the comment collection
+//            localField: "_id",
+//            foreignField: "messageSender",
+//            as: "chats"
+//          }
+//       },
+//       {
+//          $unwind: {
+//            path: '$chats',
+//            preserveNullAndEmptyArrays: true
+//          }
+//        },
+//       {
+//          $project: {
+//           'chats._id':1,
+//            mobileNumber:1,
+//            webName:1,
+//            fullName:1,
+//            mobileNumber:1,
+//            profilePicture:1
+//          }
+//        }
 
+//    ])
+//       return res.status(StatusCodes.OK).json({
+//          statusCode: 0,
+//          message: "", data: believersDetails
+//       });
+//       // debugger
+//    } catch (error) {
+//       return res.status(StatusCodes.OK).json({
+//          statusCode: 1,
+//          message: "something went wrong", data: null
+//       });
+//    }
+// };
+
+const getBeleiver = async (req, res) => {
+   debugger
    try {
-      /*code for getting user_id from  header*/
+      /* code for getting user_id from header */
       const authHeader = (req.headers.authorization) ? req.headers.authorization : null;
       if (authHeader) {
          const token = authHeader.split(' ')[1];
@@ -346,21 +405,84 @@ const getBeleiver = async (req, res) => {
          user_id = decoded._id;
          console.log("user id ", decoded._id);
       }
-      const ObjectId = require('mongoose').Types.ObjectId
-      const conditions = { _id: new ObjectId(user_id) };
-      // const result = await User.find(conditions,{believer:1 })
-      const result = await User.find().populate('believer');
+      const currentUser = await User.findById(user_id).exec();
+      console.log("current user", currentUser)
+      if (!currentUser) {
+         throw new Error('User not found');
+      }
+      const believerIds = currentUser.believer;
+      const ObjectId = require('mongoose').Types.ObjectId;
+
+      const believersDetails = await User.aggregate([
+         {
+            $match: { _id: { $in: believerIds.map(id => new ObjectId(id)) } }
+         },
+         {
+            $lookup: {
+               from: "chats", // name of the chat collection
+               let: { believerId: "$_id" },
+               pipeline: [
+                  { $match: { $expr: { $or: [{ $eq: ["$messageSender", "$$believerId"] }, { $eq: ["$messageReceiver", "$$believerId"] }] } } },
+                  { $match: { $expr: { $or: [{ $eq: ["$messageSender",new  ObjectId(user_id)] }, { $eq: ["$messageReceiver", new ObjectId(user_id)] }] } } },
+                  { $project: { _id: 1 } }
+               ],
+               as: "chats"
+            }
+         },
+         {
+            $unwind: {
+               path: '$chats',
+               preserveNullAndEmptyArrays: true
+            }
+         },
+         {
+            $project: {
+               'chats._id': 1,
+               mobileNumber: 1,
+               webName: 1,
+               fullName: 1,
+               profilePicture: 1
+            }
+         }
+      ]);
+
       return res.status(StatusCodes.OK).json({
          statusCode: 0,
-         message: "", data: result
+         message: "",
+         data: believersDetails
       });
-      debugger
    } catch (error) {
-      return res.status(StatusCodes.OK).json({
+      console.error("Error: ", error);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
          statusCode: 1,
-         message: "something went wrong", data: null
+         message: "something went wrong",
+         data: null
       });
    }
 };
 
-module.exports = { signUp, signIn, webNameCheck, updateUserDetails, getUserDetails, searchWebName, believer, getBeleiver };
+const checkMobileNumbers = async (req, res) => {
+   debugger
+   console.log(req.body.contacts);
+   try {
+      let numbers = req.body.contacts?req.body.contacts:"";
+     const foundNumbers = await User.find({ mobileNumber: { $in: req.body.contacts } });
+     const foundSet = new Set(foundNumbers.map(num => num.mobileNumber));
+     const results = numbers.map(mobileNumber => ({
+      mobileNumber,
+       present: foundSet.has(mobileNumber)
+     }));
+     return res.status(StatusCodes.OK).json({
+      statusCode: 0,
+      message: "", data:results 
+   });
+   } catch (err) {
+     console.error('Error checking mobile numbers', err);
+     return res.status(StatusCodes.OK).json({
+      statusCode: 1,
+      message: err, data:null 
+   });
+   }
+ };
+
+module.exports = { signUp, signIn, webNameCheck, updateUserDetails, getUserDetails, searchWebName, believer, getBeleiver,checkMobileNumbers };

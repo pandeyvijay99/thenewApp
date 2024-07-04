@@ -64,7 +64,7 @@ videoReaction:[{
  }],
  videoRating:[{
    ratingno:{
-      type:String,
+      type:Number,
       require: true
    },
    rating_user_id: {
@@ -88,8 +88,16 @@ believer: {
  },
  title:{
    type:String,
-   required: true
- }
+   //required: true
+ },
+ totalRating:{
+   type :Number
+ },
+ thumbnailVideoUrl: {
+  type: String,
+  require: true,
+  // index:true
+},
 },
 
 {

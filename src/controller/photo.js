@@ -239,6 +239,7 @@ const fetchAllPhoto = async (req, res) => {
             user_details: 1,
             views: 1,
             totalRating: 1,
+            description:1,
             ratingCount: {
               $cond: {
                 if: { $isArray: "$photoRating" }, // Check if reactions field is an array
@@ -321,6 +322,7 @@ const fetchAllPhoto = async (req, res) => {
             user_details: 1,
             views: 1,
             totalRating: 1,
+            description:1,
             ratingCount: {
               $cond: {
                 if: { $isArray: "$photoRating" }, // Check if reactions field is an array
@@ -680,21 +682,32 @@ const totalRating = async (req, res) => {
         $match: { _id: new ObjectId(req.body.photo_id) } // Match the parent document with the given ID
       },
       {
-        $project: {
-          totalRating: { $size: '$photoRating' } // Project a field with the size of the subdocuments array
+        $unwind: "$photoRating"
+      },
+      {
+        $group: {
+          _id: "$photoRating.ratingno",        // Group by the 'rating' field
+          count: { $sum: 1 }     // Count the number of movies in each group
         }
-      }
+      },
     ]);
 
     let currentUserRating = "";
+    // let matchCondition = 
     if (req.body.current_user_id) {
 
       currentUserRating = await Photo.aggregate([
         {
           $unwind: "$photoRating"
         },
-        { $match: { $expr: { $eq: ["$phtoRating.rating_user_id", new ObjectId(req.body.current_user_id)] } } },
-
+        {
+              $match: {
+                _id: new ObjectId(req.body.photo_id),
+                $expr: {
+                  $eq: ["$photoRating.rating_user_id", new ObjectId(req.body.current_user_id)]
+                }
+              }
+        },
         {
           $project: {
             "photoRating.ratingno": 1
@@ -703,7 +716,7 @@ const totalRating = async (req, res) => {
 
       ]);
     }
-    console.log("result is ", result);
+    // console.log("result is ", result);
     const pageNumber = req.body.offset ? req.body.offset : 1; // Assuming page number starts from 1
     const pageSize = (req.body.limit) ? (req.body.limit) : 10; // Number of documents per page
     const offset = (pageNumber - 1) * pageSize; // Calculate offset
@@ -748,7 +761,7 @@ const totalRating = async (req, res) => {
     return res.status(StatusCodes.OK).json({
       statusCode: 0,
       message: "",
-      data: { result, RatingCount },
+      data: { Ratings, RatingCount ,currentUserRating},
     });
 
   } catch (error) {

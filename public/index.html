@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat App</title>
+  <style>
+    ul { list-style-type: none; padding: 0; }
+    li { padding: 8px; margin-bottom: 10px; background: #f4f4f4; border-radius: 4px; }
+    input { padding: 10px; border: none; border-radius: 4px; width: 80%; }
+    button { padding: 10px; border: none; border-radius: 4px; background: #333; color: #fff; }
+  </style>
+</head>
+<body>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="message" autocomplete="off" placeholder="Type a message" />
+    <input id="sender" autocomplete="off" placeholder="Your name" />
+    <input id="chat" autocomplete="off" placeholder="chatId" />
+    <input id="messageType" autocomplete="off" placeholder="messageType" />
+    <input id="readStatus" autocomplete="off" placeholder="readStatus" />
+    <button>Send</button>
+  </form>
+
+  <script>
+    const ws = new WebSocket('ws://' + window.location.host+"?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI2OTY5YTYyMmQyNGEyYmExNGUyNjEiLCJtb2JpbGVOdW1iZXIiOiI4MjMzMTI3OTA1IiwiaWF0IjoxNzE5NTA1NTQzLCJleHAiOjE3MjgxNDU1NDN9.ELMF95ei73S7gK5jWRd7h9agfo0RYhuGqnidQuS1A3I");
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('message');
+    var senderInput = document.getElementById('sender');
+    var chat_id = document.getElementById("chat");
+    var messageType = document.getElementById("messageType");
+    var readStatus = document.getElementById("readStatus");
+    var messages = document.getElementById('messages');
+
+    ws.onopen = function() {
+      console.log('Connected to the server');
+    };
+
+    ws.onmessage = function(event) {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'history') {
+        msg.data.forEach(displayMessage);
+      } else if (msg.type === 'message') {
+        displayMessage(msg.data);
+      }
+    };
+
+    ws.onclose = function() {
+      console.log('Disconnected from the server');
+    };
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      if (input.value && senderInput.value && chat_id.value) {
+        const message = {
+          message: input.value,
+          sender: senderInput.value,
+          chat_id:chat_id.value,
+          readStatus:readStatus.value,
+          messageType:messageType.value
+        };
+        ws.send(JSON.stringify(message));
+        input.value = '';
+      }
+    });
+
+    function displayMessage(msg) {
+      const item = document.createElement('li');
+      item.textContent = `${msg.sender}: ${msg.message}`;
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  </script>
+</body>
+</html>

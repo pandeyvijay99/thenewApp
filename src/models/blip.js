@@ -88,7 +88,12 @@ believer: {
  },
  totalRating:{
    type :Number
- }
+ },
+ thumbnailBlipUrl: {
+  type: String,
+  require: true,
+  // index:true
+},
 },
 
 {
