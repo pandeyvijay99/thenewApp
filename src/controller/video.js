@@ -12,6 +12,8 @@ const multer = require('multer');
 const path = require('path');
 const User = require("../models/auth");
 const reactionD = require("../helper");
+const Webname = require("../models/webname");
+const { json } = require("express");
 // const path = require('path');
 require("dotenv").config();
 
@@ -1052,11 +1054,86 @@ const getAllVideosWithCount = async (req, res) => {
   .catch(error => {
     console.error(error);
     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null});
-  });
+  });  
+}; 
+
+const getUserVideoBasedOnWebname = async (req, res) => {
+  // console.log("validation ")
+try {
+  debugger;
+  const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+  const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+  const offset = (pageNumber - 1) * pageSize; // Calculate offset
+  const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+  let arrayOfIds = "";
+      if(authHeader){
+          const token =  authHeader.split(' ')[1];
+          if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+              const decoded = jwt.verify(token, process.env.JWT_SECRET);
+               user_id = decoded._id;
+              mobileNumber =decoded.mobileNumber?decoded.mobileNumber:null;
+              console.log("user_id ",decoded._id);
+              const ObjectId = require('mongoose').Types.ObjectId
+              let userDetails = await User.findOne({ webName: req.body.webName });
+              Did = (userDetails._id).toString();
+               const filter = { video_user_id: Did };
+               console.log("user details ",filter);
+              arrayOfIds = userDetails.believer?userDetails.believer:"";
+               console.log("user_id",arrayOfIds)
+              const result = await   Video.aggregate([ 
+                {
+                  $match :filter
+                },
+                {
+                  $project: {
+                    _id: 1,
+                    videoUrl: 1,
+                    thumbnailVideoUrl:1,
+                    tags: 1,
+                    hashtag:1,
+                    comments:1,
+                    views:1,
+                    description:1,
+                    title:1,
+                    believerStatus: {
+                      $cond: {
+                        if: { '$in': [user_id,arrayOfIds] }, // Check if reactions field is an array
+                        then: true,   // If reactions is an array, return its size
+                        else: false                        // If reactions is not an array or doesn't exist, return 0
+                      }
+                    },
+                    
+                    createdAt:1,
+                    updatedAt:1
+                    
+                  }
+                },
+                { "$sort": { "_id": -1 } },
+                {
+                  $skip: offset
+                },
+                {
+                  $limit: pageSize
+                }
+               ]);
+               debugger;
+               
+               if (userDetails) {
+                    //  console.log("user ", userDetails);
+                 return res.status(StatusCodes.OK).json({statusCode:"0",message:"",
+                  data:{userDetails,result}
+            });
+           
+           } 
+      }
   
  
-  
-}; 
+} catch (error) {
+  console.log("catch ", error );
+return  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
+}
+};
+
  module.exports = {fetchVideo,uploadVideoFile ,fetchAllVideo,postVideoReaction,
             postVideoRating,totalVideoReaction,totalVideoRating,fetchGroupVideoRating,videoView,trendingViews
-          ,believersVideo,recommendedVideos,getAllVideosWithCount};
+          ,believersVideo,recommendedVideos,getAllVideosWithCount,getUserVideoBasedOnWebname};

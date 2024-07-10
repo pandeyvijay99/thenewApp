@@ -68,35 +68,58 @@ wss.on('connection',function  (ws,req)  {
     return;
   }
    console.log("token is ",token)
-   const decoded = jwt.verify(token, process.env.JWT_SECRET);
-         console.log("token", token);
-         user_id = decoded._id;
-         console.log("user id ", decoded._id);
-         ws.user = user_id;
-
+   if(token!=null || token!="null" || token!='null' || token!=undefined || token !='' ){
+    console.log("token type is ",typeof(token), token);
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("token", token);
+        user_id = decoded._id;
+        console.log("user id ", decoded._id);
+        ws.user = user_id;
+  }
   ws.on('message', async (data, isBinary)=> {
-    
+    debugger;
     const msg = JSON.parse(data);
+    console.log("message ",msg)
+    if(msg.type==='getHistory'){
+      let  chatHistory = await chatController.getChatHistory(msg.chat_id)
+      console.log("chatHistory",chatHistory)
+      chatHistory = new TextEncoder().encode(JSON.stringify(chatHistory))
+      wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN ) {
+          client.send(chatHistory, { binary: isBinary });
+        }
+    });
+    }
+    if(msg.type==="updateMessage"){
+    if(msg.message_id && (msg.message_id).length>0){
+      let  updateMessage  = await chatController.updateMessageStatus(msg.chat_id,msg.message_id)
+      updateMessage = new TextEncoder().encode(JSON.stringify(updateMessage))
+      wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN ) {
+          client.send(updateMessage, { binary: isBinary });
+        }
+    });
+    }
+  }
+    debugger;
     try{
+      if(msg.type==="message"){
       const savedMessage = await chatController.saveMessage(msg);
       debugger
       console.log("messageReciver",savedMessage.messageReceiver)
       const lastMessage = savedMessage.message[savedMessage.message.length - 1];
-    console.log('Last inserted message:', lastMessage);
-      // const lastRecord = await chatModel.find({}).sort({_id: -1}).limit(1);
-      
-      // console.log("lastRecord",lastRecord)
-      // console.log("savedMessage",savedMessage)
+      console.log('Last inserted message:', lastMessage);
       debugger
       const ObjectId = require('mongoose').Types.ObjectId
       const userDetail = await user.findById(new ObjectId(msg.sender));
        data = {...msg, userDetail: userDetail ,chat_created_at:lastMessage.createdAt?lastMessage.createdAt:"",message_id:lastMessage._id,messageReceiver:savedMessage.messageReceiver?savedMessage.messageReceiver:""}
        data = new TextEncoder().encode(JSON.stringify(data))
       wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN  && client.user==savedMessage.messageReceiver) {
+        if (client.readyState === WebSocket.OPEN ) {
           client.send(data, { binary: isBinary });
         }
     });
+  }
   }catch(err){
     console.error('Error saving message:', err);
   }

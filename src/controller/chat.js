@@ -52,19 +52,21 @@ const userChat = async (req, res) => {
   }
 };
 
-const getChatHistory = async (req, res) => {
+const getChatHistory = async (req) => {
+  debugger
    console.log("chat validation ")
 try {
-    if (!req.body.chat_id) {
+    if (!req) {
     
-      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-         message: "Please Enter required parameter",data:null
-      });
+      // return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+      //    message: "Please Enter required parameter",data:null
+      // });
+      return "Please Enter required parameter"
    }
-   const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
-   const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
-   const offset = (pageNumber - 1) * pageSize; // Calculate offset
-   const ObjectId = require('mongoose').Types.ObjectId
+  //  const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
+  //  const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
+  //  const offset = (pageNumber - 1) * pageSize; // Calculate offset
+  const ObjectId = require('mongoose').Types.ObjectId
       //  const result = await Chat.find({_id:new ObjectId(req.body.chat_id)})
       //  .limit(pageSize)
       //  .skip(offset)
@@ -72,7 +74,7 @@ try {
       const result = await   Chat.aggregate([
          {
              $match:{
-               _id:new ObjectId(req.body.chat_id)
+               _id:new ObjectId(req)
              } // unwind the comments array
          },
          {
@@ -108,10 +110,12 @@ try {
       ]);
 
        console.log('chatID created ');
-       return res.status(StatusCodes.OK).json({ statusCode:0,message:"",data:result });
+       return result;
+      //  return res.status(StatusCodes.OK).json({ statusCode:0,message:"",data:result });
 } catch (error) {
   console.log("catch ", error );
- return res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
+  return error.message
+//  return res.status(StatusCodes.OK).json({ statusCode:1,message: error,data:null });
 }
 };
 const createChatRoom = async (req,res) => {
@@ -189,15 +193,16 @@ const getRecentMessages = async () => {
      throw err;
    }
  };
- const updateMessageStatus = async (req,res) => {
+ const updateMessageStatus = async (chat_id,message_id) => {
   debugger;
   try {
-    if (!req.body.chat_id || !req.body.message_id  ) {
-      return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
-         message: "Please Enter required parameter",data:null
-      });
+    if (!chat_id || !message_id  ) {
+      // return res.status(StatusCodes.BAD_REQUEST).json({statusCode:1,
+      //    message: "Please Enter required parameter",data:null
+      // });
+      return "invalid parameter"
    }
-   let stringObjectIdArray= req.body.message_id
+   let stringObjectIdArray= message_id
   // const ObjectId = require('mongoose').Types.ObjectId
 //    const chatData ={
 //     messageSender:new ObjectId(req.body.sender_user_id),
@@ -217,20 +222,21 @@ const getRecentMessages = async () => {
    console.log("filer is ",objectIdArray);
   
   const result = await Chat.updateMany(
-    {'message._id': { $in:(objectIdArray) },_id : new ObjectId(req.body.chat_id) },
+    {'message._id': { $in:(objectIdArray) },_id : new ObjectId(chat_id) },
     { $set: { 'message.$[elem].readStatus': true } },
     { arrayFilters: [{ 'elem._id': { $in: (objectIdArray) } }] }
   );
   console.log(result);
-   return res.status(StatusCodes.OK).json({statusCode:0,
-    message:"",   
-    data: {info:"read status updated successfully"},
- });
- 
+//    return res.status(StatusCodes.OK).json({statusCode:0,
+//     message:"",   
+//     data: {info:"read status updated successfully"},
+//  });
+ return result;
    
 } catch (error) {
   console.log("catch ", error );
- return res.status(StatusCodes.BAD_REQUEST).json({ statusCode:1,message: error,data:null });
+//  return res.status(StatusCodes.BAD_REQUEST).json({ statusCode:1,message: error,data:null });
+return error.message
 }
  };
  const getUserChat = async (req, res) => {
