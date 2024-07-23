@@ -1,9 +1,14 @@
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/auth");
 const Webname = require("../models/webname");
+const Blip = require("../models/blip");
+const Video = require("../models/video");
+const Photo = require("../models/photo");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const shortid = require("shortid");
+const Audit  = require("../models/audit")
+const moment = require('moment-timezone');
 /**
  * @api {post} /api/signin Request User information
  * @apiName signin
@@ -204,22 +209,44 @@ const updateUserDetails = async (req, res) => {
 
 const getUserDetails = async (req, res) => {
    // console.log("validation ")
+   const authHeader = (req.headers.authorization)?req.headers.authorization:null;
+   if(authHeader){
+      const token =  authHeader.split(' ')[1];
+      if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            current_user_id = decoded._id;
+   }
    try {
       console.log("inside validation ")
-      if (!req.body.userId) {
+      if (!req.body.webName) {
          return res.status(StatusCodes.BAD_REQUEST).json({
             statusCode: 1,
             message: "Please Provide Valid details ", data: null
          });
       }
 
-      const user = await User.findOne({ _id: req.body.userId });
-      // console.log("user details ",user)
+      const user = await User.findOne({ webName: req.body.webName });
+      // console.log("user details ",user._id);
+      let isBeliever = "" 
+      let userId = (user._id).toString();
+      let believers = user.believer;
+      if(believers.includes(current_user_id)){
+         isBeliever = true
+      }else{
+         isBeliever = false
+      }
+      const videoCount = await Video.countDocuments({ video_user_id: userId });
+      const photoCount = await Photo.countDocuments({ photo_user_id: userId });
+      const blipCount = await Blip.countDocuments({ blip_user_id: userId });
+      believerCount = (user.believer).length;
+
+      console.log("user details ",videoCount, photoCount, blipCount,believerCount,isBeliever)
+      
       if (user) {
-         console.log("user ", user);
+         // console.log("user ", user);
          return res.status(StatusCodes.OK).json({
             statusCode: 0, message: "",
-            data: { user }
+            data: { user,videoCount, photoCount,blipCount,isBeliever}
          });
 
       } else {
@@ -230,7 +257,7 @@ const getUserDetails = async (req, res) => {
          });
       }
    } catch (error) {
-      console.log("catch ", error);
+      // console.log("catch ", error);
       return res.status(StatusCodes.BAD_REQUEST).json({ error });
    }
 };
@@ -485,4 +512,46 @@ const checkMobileNumbers = async (req, res) => {
    }
  };
 
-module.exports = { signUp, signIn, webNameCheck, updateUserDetails, getUserDetails, searchWebName, believer, getBeleiver,checkMobileNumbers };
+ const userActivity = async (req, res) => {
+   debugger
+   console.log(req.body.webName);
+   try {
+     const findMobile = await User.findOne({ WebName: req.body.WebName  });
+     let mobileNumber = findMobile.mobileNumber;
+     console.log("createAt",findMobile.createdAt)
+     const oneMonthAgo = new Date();
+     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+     const convertedDate = moment.tz(oneMonthAgo, 'UTC').tz('Etc/UTC').toISOString();
+     console.log("oneMonthAgo",oneMonthAgo)
+     console.log("convertedDate",convertedDate)
+     let filter = {mobileNumber,
+      createdAt: { $gte: oneMonthAgo } }
+      console.log(filter)
+     try {
+         const records = await Audit.find(
+            
+         );
+ 
+         return res.status(StatusCodes.OK).json({
+            statusCode: 0,
+            message: "", data:records 
+         });
+     } catch (err) {
+         console.error('Error fetching records:', err);
+         throw err;
+     }
+
+
+     console.log("mobileNumber "+mobileNumber)
+    
+   } catch (err) {
+     console.error('Error checking mobile numbers', err);
+     return res.status(StatusCodes.OK).json({
+      statusCode: 1,
+      message: err, data:null 
+   });
+   }
+ };
+ 
+
+module.exports = { signUp, signIn, webNameCheck, updateUserDetails, getUserDetails, searchWebName, believer, getBeleiver,checkMobileNumbers,userActivity };

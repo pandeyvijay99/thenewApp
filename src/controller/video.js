@@ -12,9 +12,10 @@ const multer = require('multer');
 const path = require('path');
 const User = require("../models/auth");
 const reactionD = require("../helper");
+
 const Webname = require("../models/webname");
 const { json } = require("express");
-// const path = require('path');
+const logAudit = require("../../src/common")
 require("dotenv").config();
 
 
@@ -169,7 +170,7 @@ const containerClient = blobServiceClient.getContainerClient(containerName);
             });
         console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
         console.log('File uploaded successfully to Azure Blob Storage:', uploadThumbnailResponse);
-        
+        await logAudit("Video", mobileNumber, fileUrl,thumbnailFileUrl,"" ,video_user_id,description,"")
         return res.status(200).send({statusCode:0,message:'',data:"File uploaded successfully."});
     } catch (error) {
         console.error("Error uploading to Azure Blob Storage:", error);

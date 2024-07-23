@@ -12,6 +12,7 @@ const multer = require('multer');
 const path = require('path');
 const User = require("../models/auth");
 const reactionD = require("../helper");
+const logAudit = require("../../src/common")
 // const logger = require("../middleware/logger")
 require("dotenv").config();
 
@@ -133,7 +134,9 @@ const uploadProfilePic = async (req, res) => {
     debugger;
     const user = await User.findOneAndUpdate({ mobileNumber: mobileNumber }, { $set: { profilePicture: fileUrl } });
     console.log("user ", user)
+    
     // console.log("user details ",user)
+    
     return res.status(200).send({ statusCode: 0, message: '', data: { profilePicture: fileUrl } });
   } catch (error) {
     console.error("Error uploading to Azure Blob Storage:", error);
@@ -231,6 +234,7 @@ const uploadBlipFile = async (req, res) => {
     Blip.create(blipData).then((data, err) => {
       if (err) return res.status(StatusCodes.OK).json({ statusCode: 1, message: err, data: null });
     });
+   await logAudit("Blip", mobileNumber, fileUrl,thumbnailFileUrl,"" ,blip_user_id,description,"")
     console.log('File uploaded successfully to Azure Blob Storage:', uploadResponse);
     console.log('File uploaded successfully to Azure Blob Storage:', uploadThumbnailResponse);
 

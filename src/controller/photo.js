@@ -12,6 +12,7 @@ const multer = require('multer');
 const path = require('path');
 const User = require("../models/auth");
 const reactionD = require("../helper");
+const logAudit = require("../../src/common")
 require("dotenv").config();
 
 
@@ -171,7 +172,7 @@ const uploadPhotoFile = async (req, res) => {
     if (err) return res.status(StatusCodes.OK).json({ statusCode: 1, message: err, data: null });
   });
 
-
+  await logAudit("Photo", mobileNumber, "","" ,blobURLs,photo_user_id,description,"")
   return res.status(200).send({ statusCode: 0, message: '', data: "File uploaded successfully." });
 
 
