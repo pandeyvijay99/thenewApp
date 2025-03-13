@@ -1,0 +1,12 @@
+[ 
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "thename.app.stagging",
+            "sha256_cert_fingerprints": ["4F:BF:7B:57:6A:91:0E:EB:2A:E3:0E:3C:80:2F:B9:02:E8:7E:FC:8C:23:5E:F0:08:22:3C:A5:A8:68:40:C9:60"]
+        }
+    }
+]

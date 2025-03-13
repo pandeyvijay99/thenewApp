@@ -3,11 +3,11 @@ const bcrypt = require("bcrypt");
 const chatSchema = new mongoose.Schema({
  messageSender: {
    type: mongoose.Schema.Types.ObjectId,
-   ref: "sender_user_id"
+  //  ref: "sender_user_id"
      },
   messageReceiver: {
    type: mongoose.Schema.Types.ObjectId,
-   ref: "receiver_user_id"
+  //  ref: "receiver_user_id"
   },
   message: [{
     message:{
@@ -17,6 +17,10 @@ const chatSchema = new mongoose.Schema({
   messageSender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "sender_user_id"
+  },
+  messageReceiver: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "reciever_user_id"
   },
   messageType: {
     type: String

@@ -15,20 +15,16 @@
     <input id="message" autocomplete="off" placeholder="Type a message" />
     <input id="sender" autocomplete="off" placeholder="Your name" />
     <input id="chat" autocomplete="off" placeholder="chatId" />
-    <input id="messageType" autocomplete="off" placeholder="messageType" />
-    <input id="readStatus" autocomplete="off" placeholder="readStatus" />
     <button>Send</button>
   </form>
 
   <script>
-    const ws = new WebSocket('ws://' + window.location.host+"?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NjI2OTY5YTYyMmQyNGEyYmExNGUyNjEiLCJtb2JpbGVOdW1iZXIiOiI4MjMzMTI3OTA1IiwiaWF0IjoxNzE5NTA1NTQzLCJleHAiOjE3MjgxNDU1NDN9.ELMF95ei73S7gK5jWRd7h9agfo0RYhuGqnidQuS1A3I");
+    const ws = new WebSocket('wss://' + window.location.host);
 
     var form = document.getElementById('form');
     var input = document.getElementById('message');
     var senderInput = document.getElementById('sender');
     var chat_id = document.getElementById("chat");
-    var messageType = document.getElementById("messageType");
-    var readStatus = document.getElementById("readStatus");
     var messages = document.getElementById('messages');
 
     ws.onopen = function() {
@@ -54,9 +50,7 @@
         const message = {
           message: input.value,
           sender: senderInput.value,
-          chat_id:chat_id.value,
-          readStatus:readStatus.value,
-          messageType:messageType.value
+          chat_id:chat_id.value
         };
         ws.send(JSON.stringify(message));
         input.value = '';

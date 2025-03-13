@@ -13,6 +13,7 @@ const path = require('path');
 const User = require("../models/auth");
 const reactionD = require("../helper");
 const logAudit = require("../../src/common")
+const sendPushNotification = require('../controller/notificaion');
 require("dotenv").config();
 
 
@@ -132,8 +133,8 @@ const uploadPhotoFile = async (req, res) => {
 
   if (!filedata) {
     return res.status(400).send({ statusCode: 1, message: 'No file uploaded.', data: null });
-  } else if (filedata.size > (20 * 1024 * 1024)) {
-    return res.status(400).send({ statusCode: 1, message: 'Maximum allowed size is 5MB', data: null });
+  } else if (filedata.size > (1024 * 1024 * 1024)) {
+    return res.status(400).send({ statusCode: 1, message: 'Maximum allowed size is 1GB', data: null });
   }
   let blobURLs = [];
   for (const files of filedata) {
@@ -172,7 +173,12 @@ const uploadPhotoFile = async (req, res) => {
     if (err) return res.status(StatusCodes.OK).json({ statusCode: 1, message: err, data: null });
   });
 
-  await logAudit("Photo", mobileNumber, "","" ,blobURLs,photo_user_id,description,"")
+  await logAudit("Photo", "",mobileNumber, "", "", blobURLs, photo_user_id, description, "")
+  const ObjectId = require('mongoose').Types.ObjectId
+  await User.updateOne(
+    { _id: new ObjectId(photo_user_id) }, // Match the user ID
+    { $inc: { photo_count: 1 } } // Increment the blip_count
+  );
   return res.status(200).send({ statusCode: 0, message: '', data: "File uploaded successfully." });
 
 
@@ -201,7 +207,7 @@ const fetchAllPhoto = async (req, res) => {
       const user_ids = await User.find({ _id: new ObjectId(user_id) }, { believer: 1 })
       if (req.body.isBelieverRequire == false)
         // condition = { mobileNumber: mobileNumber }
-        condition = { }
+        condition = {}
       else if (req.body.isBelieverRequire && req.body.isBelieverRequire == true) {
         const ObjectId = require('mongoose').Types.ObjectId
         const user_ids = await User.find({ _id: new ObjectId(user_id) }, { believer: 1 })
@@ -237,10 +243,11 @@ const fetchAllPhoto = async (req, res) => {
             tags: 1,
             hashtag: 1,
             comments: 1,
+            commentCount: 1,
             user_details: 1,
             views: 1,
             totalRating: 1,
-            description:1,
+            description: 1,
             ratingCount: {
               $cond: {
                 if: { $isArray: "$photoRating" }, // Check if reactions field is an array
@@ -276,22 +283,22 @@ const fetchAllPhoto = async (req, res) => {
         }
       ]);
       debugger;
-      const totalComment = await PhotoComment.aggregate([
-        {
-          $match: condition
-        },
-        {
-          $group: {
-            _id: '$photo_id',
-            count: { $sum: 1 } // this means that the count will increment by 1
-          }
-        }
-      ]);
+      // const totalComment = await PhotoComment.aggregate([
+      //   {
+      //     $match: condition
+      //   },
+      //   {
+      //     $group: {
+      //       _id: '$photo_id',
+      //       count: { $sum: 1 } // this means that the count will increment by 1
+      //     }
+      //   }
+      // ]);
       if (result) {
         console.log("user ", result);
         return res.status(StatusCodes.OK).json({
           statusCode: "0", message: "",
-          data: { result, totalComment }
+          data: { result }
         });
 
       } else {
@@ -320,10 +327,11 @@ const fetchAllPhoto = async (req, res) => {
             tags: 1,
             hashtag: 1,
             comments: 1,
+            commentCount: 1,
             user_details: 1,
             views: 1,
             totalRating: 1,
-            description:1,
+            description: 1,
             ratingCount: {
               $cond: {
                 if: { $isArray: "$photoRating" }, // Check if reactions field is an array
@@ -351,19 +359,19 @@ const fetchAllPhoto = async (req, res) => {
         }
       ]);
       debugger;
-      const totalComment = await PhotoComment.aggregate([
-        {
-          $group: {
-            _id: '$photo_id',
-            count: { $sum: 1 } // this means that the count will increment by 1
-          }
-        }
-      ]);
+      // const totalComment = await PhotoComment.aggregate([
+      //   {
+      //     $group: {
+      //       _id: '$photo_id',
+      //       count: { $sum: 1 } // this means that the count will increment by 1
+      //     }
+      //   }
+      // ]);
       if (result) {
         console.log("user ", result);
         return res.status(StatusCodes.OK).json({
           statusCode: "0", message: "",
-          data: { result, totalComment }
+          data: { result }
         });
 
       } else {
@@ -433,6 +441,12 @@ const postReaction = async (req, res) => {
     console.log("filer is ", filter);
     const result = await Photo.findOneAndUpdate(filter, { $push: { photoReaction: photoReaction } }, {
       returnOriginal: false
+    });
+    sendPushNotification(result.photo_user_id, user_id, "photoReaction", req.body.photo_id);
+    return res.status(StatusCodes.OK).json({
+      statusCode: 0,
+      message: "",
+      data: { result },
     });
     return res.status(StatusCodes.OK).json({
       statusCode: 0,
@@ -505,8 +519,8 @@ const postRating = async (req, res) => {
       });
     }
     debugger
-    console.log("photo ", product.photoRating[0]?product.photoRating[0].ratingno:"");
-    let existingUserRating = product.photoRating[0]?product.photoRating[0].ratingno : 0
+    console.log("photo ", product.photoRating[0] ? product.photoRating[0].ratingno : "");
+    let existingUserRating = product.photoRating[0] ? product.photoRating[0].ratingno : 0
     // Calculate the new total rating
 
     const newTotalRating = (((product.totalRating ? parseFloat(product.totalRating) : 0)) + parseFloat(req.body.rating));
@@ -547,6 +561,7 @@ const postRating = async (req, res) => {
       Photo.findOneAndUpdate(filterData, update, options)
         .then(updatedPost => {
           if (updatedPost) {
+            sendPushNotification(updatedPost.photo_user_id, user_id, "photoRating", req.body.photo_id);
             return res.status(StatusCodes.OK).json({
               statusCode: 0,
               message: "",
@@ -571,6 +586,7 @@ const postRating = async (req, res) => {
         { $set: { totalRating: newTotalRating } },
         { new: true } // Return the updated document
       );
+      sendPushNotification(new ObjectId(updatedProduct.photo_user_id), user_id, "photoRating", req.body.photo_id);
       return res.status(StatusCodes.OK).json({
         statusCode: 0,
         message: "",
@@ -618,6 +634,11 @@ const totalReaction = async (req, res) => {
     const offset = (pageNumber - 1) * pageSize; // Calculate offset
 
     grp = await Photo.aggregate([
+      {
+        $match: {
+          _id: new ObjectId(req.body.photo_id)
+        },
+      },
       {
         $unwind: '$photoReaction' // Unwind the subdocuments array
       },
@@ -702,12 +723,12 @@ const totalRating = async (req, res) => {
           $unwind: "$photoRating"
         },
         {
-              $match: {
-                _id: new ObjectId(req.body.photo_id),
-                $expr: {
-                  $eq: ["$photoRating.rating_user_id", new ObjectId(req.body.current_user_id)]
-                }
-              }
+          $match: {
+            _id: new ObjectId(req.body.photo_id),
+            $expr: {
+              $eq: ["$photoRating.rating_user_id", new ObjectId(req.body.current_user_id)]
+            }
+          }
         },
         {
           $project: {
@@ -762,7 +783,7 @@ const totalRating = async (req, res) => {
     return res.status(StatusCodes.OK).json({
       statusCode: 0,
       message: "",
-      data: { Ratings, RatingCount ,currentUserRating},
+      data: { Ratings, RatingCount, currentUserRating },
     });
 
   } catch (error) {
@@ -983,83 +1004,205 @@ const believersPhoto = async (req, res) => {
   }
 };
 /*End of the code*/
+// const getUserPhotoBasedOnWebname = async (req, res) => {
+//   // console.log("validation ")
+//   try {
+//     debugger;
+//     const pageNumber = req.body.offset ? req.body.offset : 1; // Assuming page number starts from 1
+//     const pageSize = (req.body.limit) ? (req.body.limit) : 10; // Number of documents per page
+//     const offset = (pageNumber - 1) * pageSize; // Calculate offset
+//     const authHeader = (req.headers.authorization) ? req.headers.authorization : null;
+//     let arrayOfIds = "";
+//     if (authHeader) {
+//       const token = authHeader.split(' ')[1];
+//       if (!token) return res.status(403).send({ statusCode: 1, message: "Access denied.", data: null });
+//       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//       user_id = decoded._id;
+//       mobileNumber = decoded.mobileNumber ? decoded.mobileNumber : null;
+//       console.log("user_id ", decoded._id);
+//       const ObjectId = require('mongoose').Types.ObjectId
+//       let user_details = await User.findOne({ webName: req.body.webName });
+//       Did = (user_details._id).toString();
+//       const filter = { photo_user_id: Did };
+//       console.log("user details ", filter);
+//       arrayOfIds = user_details.believer ? user_details.believer : "";
+//       console.log("user_id", arrayOfIds)
+//       const photos = await Photo.aggregate([
+//         {
+//           $match: filter
+//         },
+//         {
+//           $project: {
+//             _id: 1,
+//             photoUrl: 1,
+//             // thumbnailPhotoUrl:1,
+//             // tags: 1,
+//             // hashtag:1,
+//             views: 1,
+//             description: 1,
+//             commentCount: 1,
+//             // title:1,
+//             totalRating: { $sum: "$photoRating.ratingno" },
+//             believerStatus: {
+//               $cond: {
+//                 if: { '$in': [user_id, arrayOfIds] }, // Check if reactions field is an array
+//                 then: true,   // If reactions is an array, return its size
+//                 else: false                        // If reactions is not an array or doesn't exist, return 0
+//               }
+//             },
+//             ratingCount: {
+//               $cond: {
+//                 if: { $isArray: "$photoRating" }, // Check if reactions field is an array
+//                 then: { $size: "$photoRating" },   // If reactions is an array, return its size
+//                 else: 0                           // If reactions is not an array or doesn't exist, return 0
+//               }
+//             },
+//             reactionCount: {
+//               $cond: {
+//                 if: { $isArray: "$photoReaction" }, // Check if reactions field is an array
+//                 then: { $size: "$photoReaction" },   // If reactions is an array, return its size
+//                 else: 0                           // If reactions is not an array or doesn't exist, return 0
+//               }
+//             },
+
+//             createdAt: 1,
+//             updatedAt: 1
+
+//           }
+//         },
+//         { "$sort": { "_id": -1 } },
+//         {
+//           $skip: offset
+//         },
+//         {
+//           $limit: pageSize
+//         }
+//       ]);
+//       debugger;
+
+//       if (user_details) {
+//         //  console.log("user ", userDetails);
+//         return res.status(StatusCodes.OK).json({
+//           statusCode: "0", message: "",
+//           data: { result: { user_details, photos } }
+//         });
+
+//       }
+//     }
+
+
+//   } catch (error) {
+//     console.log("catch ", error);
+//     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode: 1, message: error, data: null });
+//   }
+// };
 const getUserPhotoBasedOnWebname = async (req, res) => {
-  // console.log("validation ")
-try {
-  debugger;
-  const pageNumber =req.body.offset?req.body.offset:1; // Assuming page number starts from 1
-  const pageSize = (req.body.limit)? (req.body.limit):10; // Number of documents per page
-  const offset = (pageNumber - 1) * pageSize; // Calculate offset
-  const authHeader = (req.headers.authorization)?req.headers.authorization:null;
-  let arrayOfIds = "";
-      if(authHeader){
-          const token =  authHeader.split(' ')[1];
-          if (!token) return res.status(403).send({statusCode:1,message:"Access denied.",data:null}); 
-              const decoded = jwt.verify(token, process.env.JWT_SECRET);
-               user_id = decoded._id;
-              mobileNumber =decoded.mobileNumber?decoded.mobileNumber:null;
-              console.log("user_id ",decoded._id);
-              const ObjectId = require('mongoose').Types.ObjectId
-              let userDetails = await User.findOne({ webName: req.body.webName });
-              Did = (userDetails._id).toString();
-               const filter = { photo_user_id: Did };
-               console.log("user details ",filter);
-              arrayOfIds = userDetails.believer?userDetails.believer:"";
-               console.log("user_id",arrayOfIds)
-              const result = await   Photo.aggregate([ 
-                {
-                  $match :filter
-                },
-                {
-                  $project: {
-                    _id: 1,
-                    blipUrl: 1,
-                    thumbnailBlipUrl:1,
-                   // tags: 1,
-                   // hashtag:1,
-                    views:1,
-                    description:1,
-                   // title:1,
-                    believerStatus: {
-                      $cond: {
-                        if: { '$in': [user_id,arrayOfIds] }, // Check if reactions field is an array
-                        then: true,   // If reactions is an array, return its size
-                        else: false                        // If reactions is not an array or doesn't exist, return 0
-                      }
-                    },
-                    
-                    createdAt:1,
-                    updatedAt:1
-                    
-                  }
-                },
-                { "$sort": { "_id": -1 } },
-                {
-                  $skip: offset
-                },
-                {
-                  $limit: pageSize
-                }
-               ]);
-               debugger;
-               
-               if (userDetails) {
-                    //  console.log("user ", userDetails);
-                 return res.status(StatusCodes.OK).json({statusCode:"0",message:"",
-                  data:{userDetails,result}
-            });
-           
-           } 
+  debugger
+  try {
+    const pageNumber = req.body.offset ? req.body.offset : 1; // Assuming page number starts from 1
+    const pageSize = req.body.limit ? req.body.limit : 10; // Number of documents per page
+    const offset = (pageNumber - 1) * pageSize; // Calculate offset
+    const authHeader = req.headers.authorization || null;
+
+    let arrayOfIds = "";
+    let projection = {
+      _id: 1,
+      photoUrl: 1,
+      thumbnailPhotoUrl: 1,
+      views: 1,
+      description: 1,
+      totalRating: { $sum: "$photoRating.ratingno" },
+      commentCount: 1,
+      ratingCount: {
+        $cond: {
+          if: { $isArray: "$photoRating" },
+          then: { $size: "$photoRating" },
+          else: 0,
+        },
+      },
+      reactionCount: {
+        $cond: {
+          if: { $isArray: "$photoReaction" },
+          then: { $size: "$photoReaction" },
+          else: 0,
+        },
+      },
+      createdAt: 1,
+      updatedAt: 1,
+    };
+
+    if (authHeader) {
+      const token = authHeader.split(" ")[1];
+      if (!token)
+        return res.status(403).send({
+          statusCode: 1,
+          message: "Access denied.",
+          data: null,
+        });
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user_id = decoded._id;
+
+      const user_details = await User.findOne({ webName: req.body.webName });
+      const Did = user_details._id.toString();
+      const filter = { photo_user_id: Did };
+      arrayOfIds = user_details.believer || "";
+
+      // Add `believerStatus` to the projection only if `authHeader` exists
+      projection.believerStatus = {
+        $cond: {
+          if: { $in: [user_id, arrayOfIds] },
+          then: true,
+          else: false,
+        },
+      };
+
+      const photos = await Photo.aggregate([
+        { $match: filter },
+        { $project: projection },
+        { $sort: { _id: -1 } },
+        { $skip: offset },
+        { $limit: pageSize },
+      ]);
+
+      if (user_details) {
+        return res.status(StatusCodes.OK).json({
+          statusCode: "0",
+          message: "",
+          data: { result: { user_details, photos } },
+        });
       }
-  
- 
-} catch (error) {
-  console.log("catch ", error );
-return  res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ statusCode:1,message:error,data:null });
-}
+    } else {
+      const user_details = await User.findOne({ webName: req.body.webName });
+      const Did = user_details._id.toString();
+      const filter = { photo_user_id: Did };
+
+      const photos = await Photo.aggregate([
+        { $match: filter },
+        { $project: projection }, // No `believerStatus` included in projection
+        { $sort: { _id: -1 } },
+        { $skip: offset },
+        { $limit: pageSize },
+      ]);
+
+      if (user_details) {
+        return res.status(StatusCodes.OK).json({
+          statusCode: "0",
+          message: "",
+          data: { result: { user_details, photos } },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("catch", error);
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ statusCode: 1, message: error.message, data: null });
+  }
 };
+
 module.exports = {
   fetchPhoto, uploadPhotoFile, fetchAllPhoto, postReaction,
   postRating, totalReaction, totalRating, fetchGroupRating, photoView, trendingViews
-  , believersPhoto,getUserPhotoBasedOnWebname
+  , believersPhoto, getUserPhotoBasedOnWebname
 };

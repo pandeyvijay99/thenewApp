@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 module.exports = (req, res, next) => {
     console.log("middleware")
     
-
     try {
         const authHeader = (req.headers.authorization)?req.headers.authorization:null;
         if(authHeader){

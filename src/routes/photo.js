@@ -21,7 +21,7 @@ router.route("/fetchGroupRating").post(fetchGroupRating)
 router.route("/photoView").post(photoView)
 router.route("/trendingViews").post(trendingViews)
 router.route("/believersPhoto").post(userAuthCheck,believersPhoto)
-router.route("/getUserPhotoBasedOnWebname").post(userAuthCheck,getUserPhotoBasedOnWebname)
+router.route("/getUserPhotoBasedOnWebname").post(getUserPhotoBasedOnWebname)
 
 
 module.exports = router;
