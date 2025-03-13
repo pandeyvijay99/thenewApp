@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userAuthCheck = require("../middleware/auth");
-const { insertCallLog, getCallLogs } = require("../controller/calllogs");
+const { insertCallLog, getCallLogs } = require("../controller/callLogs");
 
 router
     .route("/insertCallLog")
